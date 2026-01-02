@@ -1,13 +1,21 @@
 package screens
 
-import "yoru/types"
+import (
+	"yoru/screens/components"
+	"yoru/types"
+)
 
 type manager struct {
 	types.ScreenManager
-	Current types.Screen
+	tabBar *components.TabBar
 }
 
 type root struct {
 	types.Screen
-	toggled bool
+	tabs   []types.Screen
+	tabBar *components.TabBar
+}
+
+type home struct {
+	types.Screen
 }

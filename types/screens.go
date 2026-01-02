@@ -14,6 +14,11 @@ type Screen interface {
 	View() string
 }
 
+type Tab struct {
+	Name   string
+	Screen Screen
+}
+
 type ScreenManager interface {
 	Screen
 	SwitchScreen(screen Screen) Command
