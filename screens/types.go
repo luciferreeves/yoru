@@ -2,10 +2,12 @@ package screens
 
 import "yoru/types"
 
-type screenManager struct {
+type manager struct {
+	types.ScreenManager
 	Current types.Screen
 }
 
-type rootScreen struct {
+type root struct {
+	types.Screen
 	toggled bool
 }

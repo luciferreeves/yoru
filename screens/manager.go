@@ -5,15 +5,15 @@ import (
 	"yoru/types"
 )
 
-var ScreenManager types.ScreenManager = &screenManager{
-	Current: _root(),
+var ScreenManager = &manager{
+	Current: rootScreen,
 }
 
-func (manager *screenManager) Init() types.Command {
+func (manager *manager) Init() types.Command {
 	return manager.Current.Init()
 }
 
-func (manager *screenManager) Update(event types.Event) (types.Screen, types.Command) {
+func (manager *manager) Update(event types.Event) (types.Screen, types.Command) {
 	switch message := event.(type) {
 	case types.KeyPress:
 		if command := manager.OnKeyPress(message); command != nil {
@@ -32,15 +32,15 @@ func (manager *screenManager) Update(event types.Event) (types.Screen, types.Com
 	return manager, command
 }
 
-func (manager *screenManager) View() string {
+func (manager *manager) View() string {
 	return manager.Current.View()
 }
 
-func (manager *screenManager) SwitchScreen(screen types.Screen) types.Command {
+func (manager *manager) SwitchScreen(screen types.Screen) types.Command {
 	return manager.DispatchEvent(types.ScreenSwitched{Screen: screen})
 }
 
-func (manager *screenManager) OnKeyPress(key types.KeyPress) types.Command {
+func (manager *manager) OnKeyPress(key types.KeyPress) types.Command {
 	switch key.Type {
 	case types.CtrlC:
 		return manager.DispatchEvent(types.Quit{})
@@ -49,7 +49,7 @@ func (manager *screenManager) OnKeyPress(key types.KeyPress) types.Command {
 	}
 }
 
-func (manager *screenManager) DispatchEvent(event types.Event) types.Command {
+func (manager *manager) DispatchEvent(event types.Event) types.Command {
 	return func() types.Event {
 		return event
 	}
