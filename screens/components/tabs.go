@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type TabBar = tabBar
+var TabBar = &tabBar{}
 
 func (tabBar *tabBar) AddTab(tab types.Tab) {
 	tabBar.tabs = append(tabBar.tabs, tab)
@@ -17,44 +17,43 @@ func (tabBar *tabBar) AddTab(tab types.Tab) {
 	}
 }
 
-func (tabBar *tabBar) SetActive(index int) {
-	if index < 0 || index >= len(tabBar.tabs) {
-		return
-	}
-	tabBar.activeIndex = index
-}
-
-func (tabBar *tabBar) RemoveTab(index int) {
-	if index < 0 || index >= len(tabBar.tabs) || len(tabBar.tabs) <= 1 {
-		return
-	}
-
-	tabBar.tabs = append(tabBar.tabs[:index], tabBar.tabs[index+1:]...)
-
-	if tabBar.activeIndex >= len(tabBar.tabs) {
-		tabBar.activeIndex = len(tabBar.tabs) - 1
-	}
-}
-
-func (tabBar *tabBar) ActiveIndex() int {
-	return tabBar.activeIndex
-}
-
-func (tabBar *tabBar) ActiveScreen() types.Screen {
+func (tabBar *tabBar) GetCurrentScreen() types.Screen {
 	if tabBar.activeIndex < 0 || tabBar.activeIndex >= len(tabBar.tabs) {
 		return nil
 	}
+
 	return tabBar.tabs[tabBar.activeIndex].Screen
 }
 
-func (tabBar *tabBar) UpdateActiveScreen(screen types.Screen) {
+func (tabBar *tabBar) UpdateCurrentScreen(screen types.Screen) {
 	if tabBar.activeIndex >= 0 && tabBar.activeIndex < len(tabBar.tabs) {
 		tabBar.tabs[tabBar.activeIndex].Screen = screen
 	}
 }
 
-func (tabBar *tabBar) Count() int {
-	return len(tabBar.tabs)
+func (tabBar *tabBar) SwitchToTab(index int) {
+	if index < 0 || index >= len(tabBar.tabs) {
+		return
+	}
+
+	tabBar.activeIndex = index
+}
+
+func (tabBar *tabBar) NextTab() {
+	totalTabs := len(tabBar.tabs)
+	if totalTabs > 1 {
+		tabBar.activeIndex = (tabBar.activeIndex + 1) % totalTabs
+	}
+}
+
+func (tabBar *tabBar) PrevTab() {
+	totalTabs := len(tabBar.tabs)
+	if totalTabs > 1 {
+		tabBar.activeIndex = tabBar.activeIndex - 1
+		if tabBar.activeIndex < 0 {
+			tabBar.activeIndex = totalTabs - 1
+		}
+	}
 }
 
 func (tabBar *tabBar) Render() string {
@@ -85,3 +84,43 @@ func (tabBar *tabBar) Render() string {
 
 	return styles.TabBarBackground.Width(shared.GlobalState.ScreenWidth).Render(tabsContent)
 }
+
+// func (tabBar *tabBar) SetActive(index int) {
+// 	if index < 0 || index >= len(tabBar.tabs) {
+// 		return
+// 	}
+// 	tabBar.activeIndex = index
+// }
+
+// func (tabBar *tabBar) RemoveTab(index int) {
+// 	if index < 0 || index >= len(tabBar.tabs) || len(tabBar.tabs) <= 1 {
+// 		return
+// 	}
+
+// 	tabBar.tabs = append(tabBar.tabs[:index], tabBar.tabs[index+1:]...)
+
+// 	if tabBar.activeIndex >= len(tabBar.tabs) {
+// 		tabBar.activeIndex = len(tabBar.tabs) - 1
+// 	}
+// }
+
+// func (tabBar *tabBar) ActiveIndex() int {
+// 	return tabBar.activeIndex
+// }
+
+// func (tabBar *tabBar) ActiveScreen() types.Screen {
+// 	if tabBar.activeIndex < 0 || tabBar.activeIndex >= len(tabBar.tabs) {
+// 		return nil
+// 	}
+// 	return tabBar.tabs[tabBar.activeIndex].Screen
+// }
+
+// func (tabBar *tabBar) UpdateActiveScreen(screen types.Screen) {
+// 	if tabBar.activeIndex >= 0 && tabBar.activeIndex < len(tabBar.tabs) {
+// 		tabBar.tabs[tabBar.activeIndex].Screen = screen
+// 	}
+// }
+
+// func (tabBar *tabBar) Count() int {
+// 	return len(tabBar.tabs)
+// }
