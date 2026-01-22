@@ -1,6 +1,8 @@
 package screens
 
 import (
+	"yoru/screens/components"
+	"yoru/screens/forms"
 	"yoru/types"
 )
 
@@ -13,3 +15,12 @@ type home struct {
 	types.Screen
 	navBar types.NavBar
 }
+
+type hosts struct {
+	types.Screen
+	sidebar     *components.HostsSidebar
+	form        *forms.HostForm
+	focusedArea focusArea
+}
+
+type focusArea int

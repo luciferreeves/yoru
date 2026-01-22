@@ -6,6 +6,7 @@ import (
 	"yoru/shared"
 	"yoru/types"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -13,15 +14,24 @@ var homeScreen = &home{
 	navBar: components.NavBar,
 }
 
-func (screen *home) Init() types.Command {
+func (screen *home) Init() tea.Cmd {
+	hostsScreen.Init()
 	return nil
 }
 
-func (screen *home) Update(event types.Event) (types.Screen, types.Command) {
-	switch message := event.(type) {
-	case types.KeyPress:
-		return screen, screen.OnKeyPress(message)
+func (screen *home) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
+	switch message := msg.(type) {
+	case tea.KeyMsg:
+		if cmd := screen.OnKeyPress(message); cmd != nil {
+			return screen, cmd
+		}
 	}
+
+	currentIndex, _ := screen.navBar.GetActiveTab()
+	if currentIndex == 0 {
+		hostsScreen.Update(msg)
+	}
+
 	return screen, nil
 }
 
@@ -32,7 +42,7 @@ func (screen *home) View() string {
 	currentIndex, _ := screen.navBar.GetActiveTab()
 	switch currentIndex {
 	case 0:
-		contentText = "Hosts content coming soon"
+		contentText = hostsScreen.View()
 	case 1:
 		contentText = "SFTP content coming soon"
 	case 2:
@@ -57,11 +67,19 @@ func (screen *home) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, navBarView, contentArea)
 }
 
-func (screen *home) OnKeyPress(key types.KeyPress) types.Command {
+func (screen *home) OnKeyPress(key tea.KeyMsg) tea.Cmd {
+	currentIndex, _ := screen.navBar.GetActiveTab()
+
+	if currentIndex == 0 && (key.Type == tea.KeyLeft || key.Type == tea.KeyRight) {
+		if hostsScreen.focusedArea == formFocus || hostsScreen.sidebar.IsFilterActive() {
+			return nil
+		}
+	}
+
 	switch key.Type {
-	case types.KeyLeft:
+	case tea.KeyLeft:
 		screen.navBar.PrevTab()
-	case types.KeyRight:
+	case tea.KeyRight:
 		screen.navBar.NextTab()
 	}
 

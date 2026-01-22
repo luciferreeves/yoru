@@ -1,22 +1,16 @@
 package types
 
-type ProgramOption int
-
-const (
-	WithAltScreen ProgramOption = iota
-)
-
-type Command func() Event
+import tea "github.com/charmbracelet/bubbletea"
 
 type Screen interface {
-	Init() Command
-	Update(msg Event) (Screen, Command)
+	Init() tea.Cmd
+	Update(msg tea.Msg) (Screen, tea.Cmd)
 	View() string
 }
 
 type ScreenManager interface {
-	Screen
-	SwitchScreen(screen Screen) Command
-	OnKeyPress(key KeyPress) Command
-	DispatchEvent(event Event) Command
+	tea.Model
+	SwitchScreen(screen Screen) tea.Cmd
+	OnKeyPress(key tea.KeyMsg) tea.Cmd
+	DispatchEvent(event tea.Msg) tea.Cmd
 }

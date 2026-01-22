@@ -5,6 +5,7 @@ import (
 	"yoru/shared"
 	"yoru/types"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -12,7 +13,7 @@ var ScreenManager = &manager{
 	tabBar: components.TabBar,
 }
 
-func (manager *manager) Init() types.Command {
+func (manager *manager) Init() tea.Cmd {
 	manager.tabBar.AddTab(types.Tab{
 		Name:   "Home",
 		Screen: homeScreen,
@@ -21,13 +22,13 @@ func (manager *manager) Init() types.Command {
 	return homeScreen.Init()
 }
 
-func (manager *manager) Update(event types.Event) (types.Screen, types.Command) {
-	switch message := event.(type) {
-	case types.KeyPress:
+func (manager *manager) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch message := msg.(type) {
+	case tea.KeyMsg:
 		if command := manager.OnKeyPress(message); command != nil {
 			return manager, command
 		}
-	case types.WindowResized:
+	case tea.WindowSizeMsg:
 		shared.GlobalState.ScreenWidth = message.Width
 		shared.GlobalState.ScreenHeight = message.Height
 		return manager, nil
@@ -35,7 +36,7 @@ func (manager *manager) Update(event types.Event) (types.Screen, types.Command) 
 
 	screen := manager.tabBar.GetCurrentScreen()
 	if screen != nil {
-		current, command := screen.Update(event)
+		current, command := screen.Update(msg)
 		manager.tabBar.UpdateCurrentScreen(current)
 		return manager, command
 	}
@@ -55,45 +56,50 @@ func (manager *manager) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, contentView, tabBarView)
 }
 
-func (manager *manager) SwitchScreen(screen types.Screen) types.Command {
+func (manager *manager) SwitchScreen(screen types.Screen) tea.Cmd {
 	return nil
 }
 
-func (manager *manager) OnKeyPress(key types.KeyPress) types.Command {
+func (manager *manager) OnKeyPress(key tea.KeyMsg) tea.Cmd {
 	switch key.Type {
-	case types.CtrlC:
-		return manager.DispatchEvent(types.Quit{})
-	case types.KeyTab:
+	case tea.KeyCtrlC:
+		return tea.Quit
+	case tea.KeyTab:
 		manager.tabBar.NextTab()
-	case types.KeyShiftTab:
+	case tea.KeyShiftTab:
 		manager.tabBar.PrevTab()
-	case types.Alt0:
-		manager.tabBar.SwitchToTab(0)
-	case types.Alt1:
-		manager.tabBar.SwitchToTab(1)
-	case types.Alt2:
-		manager.tabBar.SwitchToTab(2)
-	case types.Alt3:
-		manager.tabBar.SwitchToTab(3)
-	case types.Alt4:
-		manager.tabBar.SwitchToTab(4)
-	case types.Alt5:
-		manager.tabBar.SwitchToTab(5)
-	case types.Alt6:
-		manager.tabBar.SwitchToTab(6)
-	case types.Alt7:
-		manager.tabBar.SwitchToTab(7)
-	case types.Alt8:
-		manager.tabBar.SwitchToTab(8)
-	case types.Alt9:
-		manager.tabBar.SwitchToTab(9)
+	default:
+		if key.Alt {
+			switch key.String() {
+			case "alt+0":
+				manager.tabBar.SwitchToTab(0)
+			case "alt+1":
+				manager.tabBar.SwitchToTab(1)
+			case "alt+2":
+				manager.tabBar.SwitchToTab(2)
+			case "alt+3":
+				manager.tabBar.SwitchToTab(3)
+			case "alt+4":
+				manager.tabBar.SwitchToTab(4)
+			case "alt+5":
+				manager.tabBar.SwitchToTab(5)
+			case "alt+6":
+				manager.tabBar.SwitchToTab(6)
+			case "alt+7":
+				manager.tabBar.SwitchToTab(7)
+			case "alt+8":
+				manager.tabBar.SwitchToTab(8)
+			case "alt+9":
+				manager.tabBar.SwitchToTab(9)
+			}
+		}
 	}
 
 	return nil
 }
 
-func (manager *manager) DispatchEvent(event types.Event) types.Command {
-	return func() types.Event {
+func (manager *manager) DispatchEvent(event tea.Msg) tea.Cmd {
+	return func() tea.Msg {
 		return event
 	}
 }
