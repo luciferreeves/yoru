@@ -41,22 +41,43 @@ func NewKeychainSidebar() *KeychainSidebar {
 func (sidebar *KeychainSidebar) SetItems(keys []models.Key, identities []models.Identity) {
 	sidebar.allItems = []KeychainItem{}
 
-	for _, key := range keys {
-		sidebar.allItems = append(sidebar.allItems, KeychainItem{
-			ID:       key.ID,
-			Name:     key.Name,
-			ItemType: "Key",
-			Detail:   "Private Key",
-		})
-	}
+	keyIdx := 0
+	identityIdx := 0
 
-	for _, identity := range identities {
-		sidebar.allItems = append(sidebar.allItems, KeychainItem{
-			ID:       identity.ID,
-			Name:     identity.Name,
-			ItemType: "Identity",
-			Detail:   identity.Username,
-		})
+	for keyIdx < len(keys) || identityIdx < len(identities) {
+		if keyIdx >= len(keys) {
+			sidebar.allItems = append(sidebar.allItems, KeychainItem{
+				ID:       identities[identityIdx].ID,
+				Name:     identities[identityIdx].Name,
+				ItemType: "Identity",
+				Detail:   identities[identityIdx].Username,
+			})
+			identityIdx++
+		} else if identityIdx >= len(identities) {
+			sidebar.allItems = append(sidebar.allItems, KeychainItem{
+				ID:       keys[keyIdx].ID,
+				Name:     keys[keyIdx].Name,
+				ItemType: "Key",
+				Detail:   "Private Key",
+			})
+			keyIdx++
+		} else if keys[keyIdx].ID > identities[identityIdx].ID {
+			sidebar.allItems = append(sidebar.allItems, KeychainItem{
+				ID:       keys[keyIdx].ID,
+				Name:     keys[keyIdx].Name,
+				ItemType: "Key",
+				Detail:   "Private Key",
+			})
+			keyIdx++
+		} else {
+			sidebar.allItems = append(sidebar.allItems, KeychainItem{
+				ID:       identities[identityIdx].ID,
+				Name:     identities[identityIdx].Name,
+				ItemType: "Identity",
+				Detail:   identities[identityIdx].Username,
+			})
+			identityIdx++
+		}
 	}
 
 	sidebar.applyFilter()

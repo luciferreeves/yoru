@@ -7,7 +7,7 @@ import (
 
 func GetAllIdentities() ([]models.Identity, error) {
 	var identities []models.Identity
-	if err := database.DB.Order("created_at DESC").Find(&identities).Error; err != nil {
+	if err := database.DB.Order("id DESC").Find(&identities).Error; err != nil {
 		return nil, err
 	}
 	return identities, nil
@@ -15,7 +15,7 @@ func GetAllIdentities() ([]models.Identity, error) {
 
 func GetAllKeys() ([]models.Key, error) {
 	var keys []models.Key
-	if err := database.DB.Order("created_at DESC").Find(&keys).Error; err != nil {
+	if err := database.DB.Order("id DESC").Find(&keys).Error; err != nil {
 		return nil, err
 	}
 	return keys, nil
