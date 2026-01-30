@@ -12,23 +12,26 @@ var (
 				Bold(true)
 
 	SidebarSelectedDesc = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(types.Sky)).
-				MarginBottom(1)
-
+				Foreground(lipgloss.Color(types.Sky))
 	SidebarNormalTitle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color(types.Text))
 
 	SidebarNormalDesc = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(types.Subtext0)).
-				MarginBottom(1)
-
+				Foreground(lipgloss.Color(types.Subtext0))
 	SidebarSelectedBorder = lipgloss.NewStyle().
+				BorderStyle(lipgloss.NormalBorder()).
 				BorderLeft(true).
 				BorderForeground(lipgloss.Color(types.Lavender)).
 				PaddingLeft(1)
 
 	SidebarNormalPadding = lipgloss.NewStyle().
-				PaddingLeft(2)
+				BorderStyle(lipgloss.NormalBorder()).
+				BorderLeft(true).
+				BorderForeground(lipgloss.Color(types.Base)).
+				PaddingLeft(1)
+
+	SidebarItemMargin = lipgloss.NewStyle().
+				MarginBottom(1)
 
 	SidebarFilterActive = lipgloss.NewStyle().
 				Foreground(lipgloss.Color(types.Lavender)).

@@ -252,10 +252,13 @@ func (sidebar *HostsSidebar) formatHostLine(host models.Host, isSelected bool) s
 		styledTitle := styles.SidebarSelectedTitle.Render(title)
 		styledDesc := styles.SidebarSelectedDesc.Render(desc)
 		item := lipgloss.JoinVertical(lipgloss.Left, styledTitle, styledDesc)
-		return styles.SidebarSelectedBorder.Render(item)
+		bordered := styles.SidebarSelectedBorder.Render(item)
+		return styles.SidebarItemMargin.Render(bordered)
 	}
 
-	paddedTitle := styles.SidebarNormalPadding.Render(styles.SidebarNormalTitle.Render(title))
-	paddedDesc := styles.SidebarNormalPadding.Render(styles.SidebarNormalDesc.Render(desc))
-	return lipgloss.JoinVertical(lipgloss.Left, paddedTitle, paddedDesc)
+	styledTitle := styles.SidebarNormalTitle.Render(title)
+	styledDesc := styles.SidebarNormalDesc.Render(desc)
+	item := lipgloss.JoinVertical(lipgloss.Left, styledTitle, styledDesc)
+	padded := styles.SidebarNormalPadding.Render(item)
+	return styles.SidebarItemMargin.Render(padded)
 }
