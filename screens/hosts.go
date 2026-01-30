@@ -5,6 +5,7 @@ import (
 	"yoru/repository"
 	"yoru/screens/components"
 	"yoru/screens/forms"
+	"yoru/screens/popups"
 	"yoru/screens/styles"
 	"yoru/shared"
 	"yoru/types"
@@ -27,6 +28,7 @@ var hostsScreen = &hosts{
 	sidebar:     components.NewHostsSidebar(),
 	form:        forms.NewHostForm(),
 	focusedArea: sidebarFocus,
+	deletePopup: popups.NewDeleteHostPopup(),
 }
 
 func (screen *hosts) Init() tea.Cmd {
@@ -41,6 +43,11 @@ func (screen *hosts) Init() tea.Cmd {
 }
 
 func (screen *hosts) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
+	if screen.deletePopup.IsVisible() {
+		screen.deletePopup.Update(msg)
+		return screen, nil
+	}
+
 	switch message := msg.(type) {
 	case tea.KeyMsg:
 		switch message.Type {
@@ -64,6 +71,34 @@ func (screen *hosts) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 			}
 			return screen, nil
 		}
+
+		if screen.focusedArea == sidebarFocus && (message.String() == "d" || message.String() == "D") {
+			selectedHost := screen.sidebar.GetSelected()
+			if selectedHost != nil {
+				screen.deletePopup.Show(
+					selectedHost.Name,
+					func(dontAskAgain bool) {
+						if err := repository.DeleteHost(selectedHost.ID); err == nil {
+							allHosts, _ := repository.GetAllHosts()
+							screen.sidebar.SetHosts(allHosts)
+							if len(allHosts) > 0 {
+								selected := screen.sidebar.GetSelected()
+								if selected != nil {
+									screen.form.LoadHost(selected)
+								}
+							}
+						}
+					},
+					func() {},
+				)
+			}
+			return screen, nil
+		}
+	}
+
+	// Block left/right navigation when popup is visible
+	if screen.deletePopup.IsVisible() {
+		return screen, nil
 	}
 
 	switch screen.focusedArea {
@@ -95,7 +130,14 @@ func (screen *hosts) View() string {
 		Height(formHeight).
 		Render(formView)
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, sidebar, form)
+	content := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, form)
+
+	if screen.deletePopup.IsVisible() {
+		popupView := screen.deletePopup.Render()
+		return popupView
+	}
+
+	return content
 }
 
 func (screen *hosts) OnKeyPress(key tea.KeyMsg) tea.Cmd {

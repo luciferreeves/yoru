@@ -1,8 +1,10 @@
 package screens
 
 import (
+	"yoru/models"
 	"yoru/screens/components"
 	"yoru/screens/forms"
+	"yoru/screens/popups"
 	"yoru/types"
 )
 
@@ -22,6 +24,13 @@ type hosts struct {
 	form            *forms.HostForm
 	focusedArea     focusArea
 	filterWasActive bool
+	deletePopup     *popups.DeleteHostPopup
+}
+
+type logs struct {
+	types.Screen
+	logs        []models.ConnectionLog
+	selectedIdx int
 }
 
 type focusArea int
