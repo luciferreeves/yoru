@@ -94,6 +94,15 @@ func (form *HostForm) LoadHost(host *models.Host) {
 	form.setFieldFocus()
 }
 
+func (form *HostForm) Clear() {
+	form.currentHost = nil
+	form.lastSelectedHostID = 0
+	form.fieldErrors = make(map[int]string)
+	form.nameInput.SetValue("")
+	form.hostnameInput.SetValue("")
+	form.portInput.SetValue("")
+}
+
 func (form *HostForm) setFieldFocus() {
 	form.nameInput.Blur()
 	form.hostnameInput.Blur()
@@ -286,44 +295,82 @@ func (form *HostForm) SetFocused(focused bool) {
 
 func (form *HostForm) Render() string {
 	if form.currentHost == nil {
-		return styles.FormEmpty.Render("← Select a host or press Ctrl+N to create new")
+		emptyMsg := styles.FormEmpty.Render("← No Hosts. Press Ctrl+N to create new")
+		return lipgloss.Place(
+			lipgloss.Width(emptyMsg)+4,
+			lipgloss.Height(emptyMsg)+4,
+			lipgloss.Center,
+			lipgloss.Center,
+			emptyMsg,
+		)
 	}
 
 	return form.renderEditableForm()
 }
 
 func (form *HostForm) renderEditableForm() string {
-	var lines []string
-	lines = append(lines, "")
+	var fields []string
 
-	nameView := form.nameInput.View()
-	nameLine := lipgloss.JoinHorizontal(lipgloss.Left, styles.FormLabel.Render("Name"), nameView)
+	// Connection section title
+	fields = append(fields, styles.FormSectionTitle.Render("Connection Details"))
+
+	// Name field
+	nameLabel := styles.FormLabel.Render("Name")
+	var nameView string
+	if form.focused && form.fieldIndex == FieldName {
+		nameView = styles.FormInputFocused.Render(form.nameInput.View())
+	} else {
+		nameView = styles.FormInput.Render(form.nameInput.View())
+	}
+	nameLine := lipgloss.JoinHorizontal(lipgloss.Left, nameLabel, nameView)
+	fields = append(fields, styles.FormFieldContainer.Render(nameLine))
 	if errMsg, ok := form.fieldErrors[FieldName]; ok {
-		nameLine = lipgloss.JoinVertical(lipgloss.Left, nameLine, renderError(errMsg))
+		fields = append(fields, renderError(errMsg))
 	}
-	lines = append(lines, nameLine)
 
-	hostnameView := form.hostnameInput.View()
-	hostnameLine := lipgloss.JoinHorizontal(lipgloss.Left, styles.FormLabel.Render("Hostname"), hostnameView)
+	// Hostname field
+	hostnameLabel := styles.FormLabel.Render("Hostname")
+	var hostnameView string
+	if form.focused && form.fieldIndex == FieldHostname {
+		hostnameView = styles.FormInputFocused.Render(form.hostnameInput.View())
+	} else {
+		hostnameView = styles.FormInput.Render(form.hostnameInput.View())
+	}
+	hostnameLine := lipgloss.JoinHorizontal(lipgloss.Left, hostnameLabel, hostnameView)
+	fields = append(fields, styles.FormFieldContainer.Render(hostnameLine))
 	if errMsg, ok := form.fieldErrors[FieldHostname]; ok {
-		hostnameLine = lipgloss.JoinVertical(lipgloss.Left, hostnameLine, renderError(errMsg))
+		fields = append(fields, renderError(errMsg))
 	}
-	lines = append(lines, hostnameLine)
 
-	portView := form.portInput.View()
-	portLine := lipgloss.JoinHorizontal(lipgloss.Left, styles.FormLabel.Render("Port"), portView)
+	// Port field
+	portLabel := styles.FormLabel.Render("Port")
+	var portView string
+	if form.focused && form.fieldIndex == FieldPort {
+		portView = styles.FormInputFocused.Render(form.portInput.View())
+	} else {
+		portView = styles.FormInput.Render(form.portInput.View())
+	}
+	portLine := lipgloss.JoinHorizontal(lipgloss.Left, portLabel, portView)
+	fields = append(fields, styles.FormFieldContainer.Render(portLine))
 	if errMsg, ok := form.fieldErrors[FieldPort]; ok {
-		portLine = lipgloss.JoinVertical(lipgloss.Left, portLine, renderError(errMsg))
+		fields = append(fields, renderError(errMsg))
 	}
-	lines = append(lines, portLine)
 
+	// Mode field
+	modeLabel := styles.FormLabel.Render("Mode")
 	modeView := form.renderModeChooser()
-	lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Left, styles.FormLabel.Render("Mode"), modeView))
+	modeLine := lipgloss.JoinHorizontal(lipgloss.Left, modeLabel, modeView)
+	fields = append(fields, styles.FormFieldContainer.Render(modeLine))
 
-	lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Left, styles.FormLabel.Render("Identity"), styles.FormPlaceholder.Render("(Coming soon)")))
-	lines = append(lines, "")
+	// Authentication section
+	fields = append(fields, styles.FormSectionTitle.Render("Authentication"))
+	identityLabel := styles.FormLabel.Render("Identity")
+	identityPlaceholder := styles.FormPlaceholder.Render("(Coming soon)")
+	identityLine := lipgloss.JoinHorizontal(lipgloss.Left, identityLabel, identityPlaceholder)
+	fields = append(fields, styles.FormFieldContainer.Render(identityLine))
 
-	return lipgloss.JoinVertical(lipgloss.Left, lines...)
+	formContent := lipgloss.JoinVertical(lipgloss.Left, fields...)
+	return styles.FormContainer.Render(formContent)
 }
 
 func renderError(errMsg string) string {
@@ -340,13 +387,19 @@ func (form *HostForm) renderModeChooser() string {
 		telnetBox = "[x]"
 	}
 
-	style := styles.FormText
+	checkboxStyle := styles.FormCheckbox
+	labelStyle := styles.FormCheckboxLabel
 	if form.focused && form.fieldIndex == FieldMode {
-		style = styles.FormTextFocused
+		checkboxStyle = styles.FormCheckboxFocused
+		labelStyle = styles.FormCheckboxLabelFocused
 	}
 
-	sshPart := style.Render(sshBox + " SSH")
-	telnetPart := style.Render(telnetBox + " Telnet")
+	sshPart := lipgloss.JoinHorizontal(lipgloss.Left,
+		checkboxStyle.Render(sshBox),
+		labelStyle.Render("SSH"))
+	telnetPart := lipgloss.JoinHorizontal(lipgloss.Left,
+		checkboxStyle.Render(telnetBox),
+		labelStyle.Render("Telnet"))
 
-	return sshPart + "     " + telnetPart
+	return lipgloss.JoinHorizontal(lipgloss.Left, sshPart, "   ", telnetPart)
 }

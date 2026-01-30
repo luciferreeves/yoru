@@ -86,6 +86,8 @@ func (screen *hosts) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 								if selected != nil {
 									screen.form.LoadHost(selected)
 								}
+							} else {
+								screen.form.Clear()
 							}
 						}
 					},
@@ -125,10 +127,22 @@ func (screen *hosts) View() string {
 		Width(sidebarWidth).
 		Render(sidebarView)
 
+	formWidth := shared.GlobalState.ScreenWidth - sidebarWidth - 6
+	formAreaHeight := shared.GlobalState.ScreenHeight - 8
+
+	// Center the form within the form area
+	centeredForm := lipgloss.Place(
+		formWidth,
+		formAreaHeight,
+		lipgloss.Center,
+		lipgloss.Center,
+		formView,
+	)
+
 	form := styles.FormArea.
-		Width(shared.GlobalState.ScreenWidth - sidebarWidth - 6).
+		Width(formWidth).
 		Height(formHeight).
-		Render(formView)
+		Render(centeredForm)
 
 	content := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, form)
 
