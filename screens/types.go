@@ -18,9 +18,10 @@ type home struct {
 
 type hosts struct {
 	types.Screen
-	sidebar     *components.HostsSidebar
-	form        *forms.HostForm
-	focusedArea focusArea
+	sidebar         *components.HostsSidebar
+	form            *forms.HostForm
+	focusedArea     focusArea
+	filterWasActive bool
 }
 
 type focusArea int

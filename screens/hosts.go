@@ -44,10 +44,25 @@ func (screen *hosts) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 	switch message := msg.(type) {
 	case tea.KeyMsg:
 		switch message.Type {
-		case tea.KeyEnter, tea.KeyEscape, tea.KeyCtrlN:
+		case tea.KeyEnter:
+			if screen.focusedArea == sidebarFocus {
+				if cmd := screen.OnKeyPress(message); cmd != nil {
+					return screen, cmd
+				}
+				return screen, nil
+			}
+		case tea.KeyEscape:
+			if screen.focusedArea == formFocus {
+				if cmd := screen.OnKeyPress(message); cmd != nil {
+					return screen, cmd
+				}
+				return screen, nil
+			}
+		case tea.KeyCtrlN:
 			if cmd := screen.OnKeyPress(message); cmd != nil {
 				return screen, cmd
 			}
+			return screen, nil
 		}
 	}
 
@@ -87,6 +102,7 @@ func (screen *hosts) OnKeyPress(key tea.KeyMsg) tea.Cmd {
 	switch key.Type {
 	case tea.KeyEnter:
 		if screen.focusedArea == sidebarFocus {
+			screen.filterWasActive = screen.sidebar.IsFilterActive()
 			screen.focusedArea = formFocus
 			screen.form.SetFocused(true)
 			return nil
@@ -98,6 +114,7 @@ func (screen *hosts) OnKeyPress(key tea.KeyMsg) tea.Cmd {
 			screen.focusedArea = sidebarFocus
 			screen.form.SetFocused(false)
 			screen.form.Save()
+			screen.sidebar.SetFilterActive(screen.filterWasActive)
 			return nil
 		}
 		return nil

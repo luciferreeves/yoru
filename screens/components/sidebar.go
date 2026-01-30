@@ -43,6 +43,10 @@ func (sidebar *HostsSidebar) IsFilterActive() bool {
 	return sidebar.filterActive
 }
 
+func (sidebar *HostsSidebar) SetFilterActive(active bool) {
+	sidebar.filterActive = active
+}
+
 func (sidebar *HostsSidebar) GetSelected() *models.Host {
 	if sidebar.selectedIdx >= 0 && sidebar.selectedIdx < len(sidebar.filteredHosts) {
 		return &sidebar.filteredHosts[sidebar.selectedIdx]
@@ -75,11 +79,24 @@ func (sidebar *HostsSidebar) Update(event interface{}) {
 			if sidebar.filterActive {
 				switch key.Type {
 				case tea.KeyEscape:
+					var selectedHost *models.Host
+					if sidebar.selectedIdx >= 0 && sidebar.selectedIdx < len(sidebar.filteredHosts) {
+						selectedHost = &sidebar.filteredHosts[sidebar.selectedIdx]
+					}
+
 					sidebar.filterActive = false
 					sidebar.filterText = ""
 					sidebar.filterCursorPos = 0
 					sidebar.applyFilter()
-					sidebar.selectedIdx = 0
+
+					if selectedHost != nil {
+						for i, host := range sidebar.allHosts {
+							if host.ID == selectedHost.ID {
+								sidebar.selectedIdx = i
+								break
+							}
+						}
+					}
 				case tea.KeyBackspace:
 					if sidebar.filterCursorPos > 0 {
 						sidebar.filterText = sidebar.filterText[:sidebar.filterCursorPos-1] + sidebar.filterText[sidebar.filterCursorPos:]
@@ -105,7 +122,14 @@ func (sidebar *HostsSidebar) Update(event interface{}) {
 					sidebar.filterCursorPos = 0
 				case tea.KeyEnd:
 					sidebar.filterCursorPos = len(sidebar.filterText)
-				case tea.KeyUp, tea.KeyDown:
+				case tea.KeyUp:
+					if sidebar.selectedIdx > 0 {
+						sidebar.selectedIdx--
+					}
+				case tea.KeyDown:
+					if sidebar.selectedIdx < len(sidebar.filteredHosts)-1 {
+						sidebar.selectedIdx++
+					}
 				default:
 					if len(key.Runes) > 0 && key.Runes[0] >= 32 && key.Runes[0] < 127 {
 						sidebar.filterText = sidebar.filterText[:sidebar.filterCursorPos] + string(key.Runes[0]) + sidebar.filterText[sidebar.filterCursorPos:]
