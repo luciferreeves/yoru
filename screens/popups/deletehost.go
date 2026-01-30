@@ -107,7 +107,6 @@ func (dhp *DeleteHostPopup) buildContent() string {
 	}
 	checkbox := checkboxStyle.Render(checkboxIcon + " Never ask this again (Space)")
 
-	// Add selection indicator
 	yesPrefix := "  "
 	noPrefix := "  "
 	if dhp.selectedButton == 1 {

@@ -11,19 +11,26 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type HostsSidebar struct {
-	allHosts        []models.Host
-	filteredHosts   []models.Host
+type KeychainItem struct {
+	ID       uint
+	Name     string
+	ItemType string // "Key" or "Identity"
+	Detail   string
+}
+
+type KeychainSidebar struct {
+	allItems        []KeychainItem
+	filteredItems   []KeychainItem
 	selectedIdx     int
 	filterActive    bool
 	filterText      string
 	filterCursorPos int
 }
 
-func NewHostsSidebar() *HostsSidebar {
-	return &HostsSidebar{
-		allHosts:        []models.Host{},
-		filteredHosts:   []models.Host{},
+func NewKeychainSidebar() *KeychainSidebar {
+	return &KeychainSidebar{
+		allItems:        []KeychainItem{},
+		filteredItems:   []KeychainItem{},
 		selectedIdx:     0,
 		filterActive:    false,
 		filterText:      "",
@@ -31,57 +38,85 @@ func NewHostsSidebar() *HostsSidebar {
 	}
 }
 
-func (sidebar *HostsSidebar) SetHosts(hosts []models.Host) {
-	sidebar.allHosts = hosts
+func (sidebar *KeychainSidebar) SetItems(keys []models.Key, identities []models.Identity) {
+	sidebar.allItems = []KeychainItem{}
+
+	for _, key := range keys {
+		sidebar.allItems = append(sidebar.allItems, KeychainItem{
+			ID:       key.ID,
+			Name:     key.Name,
+			ItemType: "Key",
+			Detail:   "Private Key",
+		})
+	}
+
+	for _, identity := range identities {
+		sidebar.allItems = append(sidebar.allItems, KeychainItem{
+			ID:       identity.ID,
+			Name:     identity.Name,
+			ItemType: "Identity",
+			Detail:   identity.Username,
+		})
+	}
+
 	sidebar.applyFilter()
-	if sidebar.selectedIdx >= len(sidebar.filteredHosts) {
+	if sidebar.selectedIdx >= len(sidebar.filteredItems) {
 		sidebar.selectedIdx = 0
 	}
 }
 
-func (sidebar *HostsSidebar) IsFilterActive() bool {
+func (sidebar *KeychainSidebar) IsFilterActive() bool {
 	return sidebar.filterActive
 }
 
-func (sidebar *HostsSidebar) SetFilterActive(active bool) {
+func (sidebar *KeychainSidebar) SetFilterActive(active bool) {
 	sidebar.filterActive = active
 }
 
-func (sidebar *HostsSidebar) GetSelected() *models.Host {
-	if sidebar.selectedIdx >= 0 && sidebar.selectedIdx < len(sidebar.filteredHosts) {
-		return &sidebar.filteredHosts[sidebar.selectedIdx]
+func (sidebar *KeychainSidebar) GetSelected() *KeychainItem {
+	if sidebar.selectedIdx >= 0 && sidebar.selectedIdx < len(sidebar.filteredItems) {
+		return &sidebar.filteredItems[sidebar.selectedIdx]
 	}
 	return nil
 }
 
-func (sidebar *HostsSidebar) applyFilter() {
+func (sidebar *KeychainSidebar) SelectItemByID(id uint, itemType string) {
+	for i, item := range sidebar.filteredItems {
+		if item.ID == id && item.ItemType == itemType {
+			sidebar.selectedIdx = i
+			return
+		}
+	}
+}
+
+func (sidebar *KeychainSidebar) applyFilter() {
 	if sidebar.filterText == "" {
-		sidebar.filteredHosts = sidebar.allHosts
+		sidebar.filteredItems = sidebar.allItems
 	} else {
-		sidebar.filteredHosts = []models.Host{}
+		sidebar.filteredItems = []KeychainItem{}
 		filterLower := strings.ToLower(sidebar.filterText)
-		for _, host := range sidebar.allHosts {
-			if strings.Contains(strings.ToLower(host.Name), filterLower) {
-				sidebar.filteredHosts = append(sidebar.filteredHosts, host)
+		for _, item := range sidebar.allItems {
+			if strings.Contains(strings.ToLower(item.Name), filterLower) {
+				sidebar.filteredItems = append(sidebar.filteredItems, item)
 			}
 		}
 	}
 
-	if sidebar.selectedIdx >= len(sidebar.filteredHosts) && len(sidebar.filteredHosts) > 0 {
+	if sidebar.selectedIdx >= len(sidebar.filteredItems) && len(sidebar.filteredItems) > 0 {
 		sidebar.selectedIdx = 0
 	}
 }
 
-func (sidebar *HostsSidebar) Update(event interface{}) {
+func (sidebar *KeychainSidebar) Update(event interface{}) {
 	if msg, ok := event.(tea.Msg); ok {
 		switch key := msg.(type) {
 		case tea.KeyMsg:
 			if sidebar.filterActive {
 				switch key.Type {
 				case tea.KeyEscape:
-					var selectedHost *models.Host
-					if sidebar.selectedIdx >= 0 && sidebar.selectedIdx < len(sidebar.filteredHosts) {
-						selectedHost = &sidebar.filteredHosts[sidebar.selectedIdx]
+					var selectedItem *KeychainItem
+					if sidebar.selectedIdx >= 0 && sidebar.selectedIdx < len(sidebar.filteredItems) {
+						selectedItem = &sidebar.filteredItems[sidebar.selectedIdx]
 					}
 
 					sidebar.filterActive = false
@@ -89,9 +124,9 @@ func (sidebar *HostsSidebar) Update(event interface{}) {
 					sidebar.filterCursorPos = 0
 					sidebar.applyFilter()
 
-					if selectedHost != nil {
-						for i, host := range sidebar.allHosts {
-							if host.ID == selectedHost.ID {
+					if selectedItem != nil {
+						for i, item := range sidebar.allItems {
+							if item.ID == selectedItem.ID && item.ItemType == selectedItem.ItemType {
 								sidebar.selectedIdx = i
 								break
 							}
@@ -127,7 +162,7 @@ func (sidebar *HostsSidebar) Update(event interface{}) {
 						sidebar.selectedIdx--
 					}
 				case tea.KeyDown:
-					if sidebar.selectedIdx < len(sidebar.filteredHosts)-1 {
+					if sidebar.selectedIdx < len(sidebar.filteredItems)-1 {
 						sidebar.selectedIdx++
 					}
 				default:
@@ -154,7 +189,7 @@ func (sidebar *HostsSidebar) Update(event interface{}) {
 						sidebar.selectedIdx--
 					}
 				case "down":
-					if sidebar.selectedIdx < len(sidebar.filteredHosts)-1 {
+					if sidebar.selectedIdx < len(sidebar.filteredItems)-1 {
 						sidebar.selectedIdx++
 					}
 				}
@@ -163,7 +198,7 @@ func (sidebar *HostsSidebar) Update(event interface{}) {
 	}
 }
 
-func (sidebar *HostsSidebar) Render() string {
+func (sidebar *KeychainSidebar) Render() string {
 	availableHeight := shared.GlobalState.ScreenHeight - 8
 
 	itemsPerPage := max((availableHeight)/3, 1)
@@ -191,9 +226,9 @@ func (sidebar *HostsSidebar) Render() string {
 	var content string
 	var bottomContent string
 
-	if len(sidebar.filteredHosts) == 0 {
-		noHostsPart := styles.SidebarNormalDesc.Render("No Hosts Found!")
-		content = lipgloss.JoinVertical(lipgloss.Left, filterPart, noHostsPart)
+	if len(sidebar.filteredItems) == 0 {
+		noItemsPart := styles.SidebarNormalDesc.Render("No items")
+		content = lipgloss.JoinVertical(lipgloss.Left, filterPart, noItemsPart)
 
 		contentHeight := lipgloss.Height(content)
 		spacingNeeded := availableHeight - contentHeight + 4
@@ -202,7 +237,7 @@ func (sidebar *HostsSidebar) Render() string {
 			content = lipgloss.JoinVertical(lipgloss.Left, content, spacer)
 		}
 	} else {
-		totalPages := (len(sidebar.filteredHosts) + itemsPerPage - 1) / itemsPerPage
+		totalPages := (len(sidebar.filteredItems) + itemsPerPage - 1) / itemsPerPage
 		if totalPages == 0 {
 			totalPages = 1
 		}
@@ -210,20 +245,20 @@ func (sidebar *HostsSidebar) Render() string {
 		currentPage := (sidebar.selectedIdx / itemsPerPage)
 		pageStartIdx := currentPage * itemsPerPage
 		pageEndIdx := pageStartIdx + itemsPerPage
-		if pageEndIdx > len(sidebar.filteredHosts) {
-			pageEndIdx = len(sidebar.filteredHosts)
+		if pageEndIdx > len(sidebar.filteredItems) {
+			pageEndIdx = len(sidebar.filteredItems)
 		}
 
-		var hostItems []string
+		var itemLines []string
 		for i := pageStartIdx; i < pageEndIdx; i++ {
-			host := sidebar.filteredHosts[i]
+			item := sidebar.filteredItems[i]
 			isSelected := i == sidebar.selectedIdx
-			line := sidebar.formatHostLine(host, isSelected)
-			hostItems = append(hostItems, line)
+			line := sidebar.formatItemLine(item, isSelected)
+			itemLines = append(itemLines, line)
 		}
 
-		if len(hostItems) > 0 {
-			itemsContent := lipgloss.JoinVertical(lipgloss.Left, hostItems...)
+		if len(itemLines) > 0 {
+			itemsContent := lipgloss.JoinVertical(lipgloss.Left, itemLines...)
 			content = lipgloss.JoinVertical(lipgloss.Left, filterPart, itemsContent)
 		} else {
 			content = filterPart
@@ -231,7 +266,7 @@ func (sidebar *HostsSidebar) Render() string {
 
 		start := pageStartIdx + 1
 		end := pageEndIdx
-		totalItems := len(sidebar.filteredHosts)
+		totalItems := len(sidebar.filteredItems)
 		pageNum := currentPage + 1
 
 		var dots strings.Builder
@@ -270,26 +305,21 @@ func (sidebar *HostsSidebar) Render() string {
 	return content
 }
 
-func (sidebar *HostsSidebar) formatHostLine(host models.Host, isSelected bool) string {
-	title := host.Name
-	desc := ""
-	if host.Hostname == "" {
-		desc = fmt.Sprintf(":%d", host.Port)
-	} else {
-		desc = fmt.Sprintf("%s:%d", host.Hostname, host.Port)
-	}
+func (sidebar *KeychainSidebar) formatItemLine(item KeychainItem, isSelected bool) string {
+	title := item.Name
+	desc := fmt.Sprintf("[%s] %s", item.ItemType, item.Detail)
 
 	if isSelected {
 		styledTitle := styles.SidebarSelectedTitle.Render(title)
 		styledDesc := styles.SidebarSelectedDesc.Render(desc)
-		item := lipgloss.JoinVertical(lipgloss.Left, styledTitle, styledDesc)
-		bordered := styles.SidebarSelectedBorder.Render(item)
+		itemContent := lipgloss.JoinVertical(lipgloss.Left, styledTitle, styledDesc)
+		bordered := styles.SidebarSelectedBorder.Render(itemContent)
 		return styles.SidebarItemMargin.Render(bordered)
 	}
 
 	styledTitle := styles.SidebarNormalTitle.Render(title)
 	styledDesc := styles.SidebarNormalDesc.Render(desc)
-	item := lipgloss.JoinVertical(lipgloss.Left, styledTitle, styledDesc)
-	padded := styles.SidebarNormalPadding.Render(item)
+	itemContent := lipgloss.JoinVertical(lipgloss.Left, styledTitle, styledDesc)
+	padded := styles.SidebarNormalPadding.Render(itemContent)
 	return styles.SidebarItemMargin.Render(padded)
 }

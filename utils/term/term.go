@@ -12,6 +12,5 @@ func GetTermSize() (width int, height int) {
 		width = 80
 		height = 24
 	}
-
 	return width, height
 }

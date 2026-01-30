@@ -311,11 +311,14 @@ func (form *HostForm) Render() string {
 func (form *HostForm) renderEditableForm() string {
 	var fields []string
 
-	// Connection section title
 	fields = append(fields, styles.FormSectionTitle.Render("Connection Details"))
 
-	// Name field
-	nameLabel := styles.FormLabel.Render("Name")
+	var nameLabel string
+	if form.focused && form.fieldIndex == FieldName {
+		nameLabel = styles.FormLabelFocused.Render("Name")
+	} else {
+		nameLabel = styles.FormLabel.Render("Name")
+	}
 	var nameView string
 	if form.focused && form.fieldIndex == FieldName {
 		nameView = styles.FormInputFocused.Render(form.nameInput.View())
@@ -328,8 +331,12 @@ func (form *HostForm) renderEditableForm() string {
 		fields = append(fields, renderError(errMsg))
 	}
 
-	// Hostname field
-	hostnameLabel := styles.FormLabel.Render("Hostname")
+	var hostnameLabel string
+	if form.focused && form.fieldIndex == FieldHostname {
+		hostnameLabel = styles.FormLabelFocused.Render("Hostname")
+	} else {
+		hostnameLabel = styles.FormLabel.Render("Hostname")
+	}
 	var hostnameView string
 	if form.focused && form.fieldIndex == FieldHostname {
 		hostnameView = styles.FormInputFocused.Render(form.hostnameInput.View())
@@ -342,8 +349,12 @@ func (form *HostForm) renderEditableForm() string {
 		fields = append(fields, renderError(errMsg))
 	}
 
-	// Port field
-	portLabel := styles.FormLabel.Render("Port")
+	var portLabel string
+	if form.focused && form.fieldIndex == FieldPort {
+		portLabel = styles.FormLabelFocused.Render("Port")
+	} else {
+		portLabel = styles.FormLabel.Render("Port")
+	}
 	var portView string
 	if form.focused && form.fieldIndex == FieldPort {
 		portView = styles.FormInputFocused.Render(form.portInput.View())
@@ -356,13 +367,16 @@ func (form *HostForm) renderEditableForm() string {
 		fields = append(fields, renderError(errMsg))
 	}
 
-	// Mode field
-	modeLabel := styles.FormLabel.Render("Mode")
+	var modeLabel string
+	if form.focused && form.fieldIndex == FieldMode {
+		modeLabel = styles.FormLabelFocused.Render("Mode")
+	} else {
+		modeLabel = styles.FormLabel.Render("Mode")
+	}
 	modeView := form.renderModeChooser()
 	modeLine := lipgloss.JoinHorizontal(lipgloss.Left, modeLabel, modeView)
 	fields = append(fields, styles.FormFieldContainer.Render(modeLine))
 
-	// Authentication section
 	fields = append(fields, styles.FormSectionTitle.Render("Authentication"))
 	identityLabel := styles.FormLabel.Render("Identity")
 	identityPlaceholder := styles.FormPlaceholder.Render("(Coming soon)")

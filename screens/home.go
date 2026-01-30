@@ -16,6 +16,7 @@ var homeScreen = &home{
 
 func (screen *home) Init() tea.Cmd {
 	hostsScreen.Init()
+	keychainScreen.Init()
 	logsScreen.Init()
 	return nil
 }
@@ -29,9 +30,12 @@ func (screen *home) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 	}
 
 	currentIndex, _ := screen.navBar.GetActiveTab()
-	if currentIndex == 0 {
+	switch currentIndex {
+	case 0:
 		hostsScreen.Update(msg)
-	} else if currentIndex == 4 {
+	case 2:
+		keychainScreen.Update(msg)
+	case 4:
 		logsScreen.Update(msg)
 	}
 
@@ -49,7 +53,7 @@ func (screen *home) View() string {
 	case 1:
 		contentText = "SFTP content coming soon"
 	case 2:
-		contentText = "Keychain content coming soon"
+		contentText = keychainScreen.View()
 	case 3:
 		contentText = "Known Hosts content coming soon"
 	case 4:
@@ -75,6 +79,12 @@ func (screen *home) OnKeyPress(key tea.KeyMsg) tea.Cmd {
 
 	if currentIndex == 0 && (key.Type == tea.KeyLeft || key.Type == tea.KeyRight) {
 		if hostsScreen.focusedArea == formFocus || hostsScreen.sidebar.IsFilterActive() || hostsScreen.deletePopup.IsVisible() {
+			return nil
+		}
+	}
+
+	if currentIndex == 2 && (key.Type == tea.KeyLeft || key.Type == tea.KeyRight) {
+		if keychainScreen.focusedArea == keychainFormFocus || keychainScreen.sidebar.IsFilterActive() || keychainScreen.deletePopup.IsVisible() {
 			return nil
 		}
 	}

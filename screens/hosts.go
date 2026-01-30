@@ -98,7 +98,6 @@ func (screen *hosts) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 		}
 	}
 
-	// Block left/right navigation when popup is visible
 	if screen.deletePopup.IsVisible() {
 		return screen, nil
 	}
@@ -130,7 +129,6 @@ func (screen *hosts) View() string {
 	formWidth := shared.GlobalState.ScreenWidth - sidebarWidth - 6
 	formAreaHeight := shared.GlobalState.ScreenHeight - 8
 
-	// Center the form within the form area
 	centeredForm := lipgloss.Place(
 		formWidth,
 		formAreaHeight,

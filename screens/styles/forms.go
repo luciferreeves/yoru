@@ -28,6 +28,11 @@ var (
 			Bold(true).
 			Width(12)
 
+	FormLabelFocused = lipgloss.NewStyle().
+				Foreground(lipgloss.Color(types.Lavender)).
+				Bold(true).
+				Width(12)
+
 	FormFieldContainer = lipgloss.NewStyle().
 				MarginBottom(1)
 
@@ -36,6 +41,18 @@ var (
 
 	FormInputFocused = lipgloss.NewStyle().
 				Foreground(lipgloss.Color(types.Lavender))
+
+	FormTextAreaFocused = lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color(types.Lavender))
+
+	FormTextAreaEditing = lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color(types.Peach))
+
+	FormTextAreaInvisibleBorder = lipgloss.NewStyle().
+					Border(lipgloss.RoundedBorder()).
+					BorderForeground(lipgloss.Color(types.Base))
 
 	FormCheckbox = lipgloss.NewStyle().
 			Foreground(lipgloss.Color(types.Text)).
