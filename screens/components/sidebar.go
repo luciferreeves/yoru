@@ -192,8 +192,16 @@ func (sidebar *HostsSidebar) Render() string {
 	var bottomContent string
 
 	if len(sidebar.filteredHosts) == 0 {
-		noHostsPart := styles.SidebarNormalDesc.Render("No hosts")
+		noHostsPart := styles.SidebarNormalDesc.Render("No Hosts Found!")
 		content = lipgloss.JoinVertical(lipgloss.Left, filterPart, noHostsPart)
+
+		// Add spacing to fill the entire sidebar height when no hosts
+		contentHeight := lipgloss.Height(content)
+		spacingNeeded := availableHeight - contentHeight + 4
+		if spacingNeeded > 0 {
+			spacer := lipgloss.NewStyle().Height(spacingNeeded).Render("")
+			content = lipgloss.JoinVertical(lipgloss.Left, content, spacer)
+		}
 	} else {
 		totalPages := (len(sidebar.filteredHosts) + itemsPerPage - 1) / itemsPerPage
 		if totalPages == 0 {

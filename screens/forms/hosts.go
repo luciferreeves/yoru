@@ -295,7 +295,7 @@ func (form *HostForm) SetFocused(focused bool) {
 
 func (form *HostForm) Render() string {
 	if form.currentHost == nil {
-		emptyMsg := styles.FormEmpty.Render("← No Hosts. Press Ctrl+N to create new")
+		emptyMsg := styles.FormEmpty.Render("← Nothing to see here! Press Ctrl+N to add a new host first.")
 		return lipgloss.Place(
 			lipgloss.Width(emptyMsg)+4,
 			lipgloss.Height(emptyMsg)+4,
