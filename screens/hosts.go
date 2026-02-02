@@ -25,10 +25,11 @@ const (
 )
 
 var hostsScreen = &hosts{
-	sidebar:     components.NewHostsSidebar(),
-	form:        forms.NewHostForm(),
-	focusedArea: sidebarFocus,
-	deletePopup: popups.NewDeleteHostPopup(),
+	sidebar:              components.NewHostsSidebar(),
+	form:                 forms.NewHostForm(),
+	focusedArea:          sidebarFocus,
+	deletePopup:          popups.NewDeleteHostPopup(),
+	identityChooserPopup: popups.NewIdentityChooserPopup(),
 }
 
 func (screen *hosts) Init() tea.Cmd {
@@ -48,15 +49,34 @@ func (screen *hosts) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 		return screen, nil
 	}
 
+	if screen.identityChooserPopup.IsVisible() {
+		screen.identityChooserPopup.Update(msg)
+		return screen, nil
+	}
+
 	switch message := msg.(type) {
 	case tea.KeyMsg:
 		switch message.Type {
 		case tea.KeyEnter:
-			if screen.focusedArea == sidebarFocus {
+			switch screen.focusedArea {
+			case sidebarFocus:
 				if cmd := screen.OnKeyPress(message); cmd != nil {
 					return screen, cmd
 				}
 				return screen, nil
+			case formFocus:
+				if screen.form.GetFieldIndex() == forms.FieldIdentity {
+					credType, credID := screen.form.GetSelectedCredential()
+					screen.identityChooserPopup.Show(
+						credType,
+						credID,
+						func(credentialType types.CredentialType, credentialID uint) {
+							screen.form.SetSelectedCredential(credentialType, credentialID)
+						},
+						func() {},
+					)
+					return screen, nil
+				}
 			}
 		case tea.KeyEscape:
 			if screen.focusedArea == formFocus {
@@ -99,6 +119,10 @@ func (screen *hosts) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 	}
 
 	if screen.deletePopup.IsVisible() {
+		return screen, nil
+	}
+
+	if screen.identityChooserPopup.IsVisible() {
 		return screen, nil
 	}
 
@@ -146,6 +170,11 @@ func (screen *hosts) View() string {
 
 	if screen.deletePopup.IsVisible() {
 		popupView := screen.deletePopup.Render()
+		return popupView
+	}
+
+	if screen.identityChooserPopup.IsVisible() {
+		popupView := screen.identityChooserPopup.Render()
 		return popupView
 	}
 

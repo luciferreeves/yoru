@@ -13,6 +13,22 @@ func GetAllIdentities() ([]models.Identity, error) {
 	return identities, nil
 }
 
+func GetIdentityByID(id uint) (*models.Identity, error) {
+	var identity models.Identity
+	if err := database.DB.First(&identity, id).Error; err != nil {
+		return nil, err
+	}
+	return &identity, nil
+}
+
+func GetKeyByID(id uint) (*models.Key, error) {
+	var key models.Key
+	if err := database.DB.First(&key, id).Error; err != nil {
+		return nil, err
+	}
+	return &key, nil
+}
+
 func GetAllKeys() ([]models.Key, error) {
 	var keys []models.Key
 	if err := database.DB.Order("id DESC").Find(&keys).Error; err != nil {

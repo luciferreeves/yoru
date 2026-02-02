@@ -19,6 +19,7 @@ const (
 	FieldHostname
 	FieldPort
 	FieldMode
+	FieldIdentity
 	TotalFields
 )
 
@@ -29,10 +30,12 @@ const (
 )
 
 type HostForm struct {
-	currentHost *models.Host
-	activeMode  types.ConnectionMode
-	focused     bool
-	fieldIndex  int
+	currentHost      *models.Host
+	activeMode       types.ConnectionMode
+	focused          bool
+	fieldIndex       int
+	selectedCredType types.CredentialType
+	selectedCredID   uint
 
 	nameInput     textinput.Model
 	hostnameInput textinput.Model
@@ -83,6 +86,14 @@ func (form *HostForm) LoadHost(host *models.Host) {
 		form.modeIndex = ModeTelnet
 	}
 
+	if host.CredentialID > 0 {
+		form.selectedCredType = host.CredentialType
+		form.selectedCredID = host.CredentialID
+	} else {
+		form.selectedCredType = ""
+		form.selectedCredID = 0
+	}
+
 	form.nameInput.SetValue(host.Name)
 	form.hostnameInput.SetValue(host.Hostname)
 	form.portInput.SetValue(strconv.Itoa(host.Port))
@@ -97,6 +108,8 @@ func (form *HostForm) LoadHost(host *models.Host) {
 func (form *HostForm) Clear() {
 	form.currentHost = nil
 	form.lastSelectedHostID = 0
+	form.selectedCredType = ""
+	form.selectedCredID = 0
 	form.fieldErrors = make(map[int]string)
 	form.nameInput.SetValue("")
 	form.hostnameInput.SetValue("")
@@ -136,6 +149,15 @@ func (form *HostForm) Save() {
 		} else {
 			form.currentHost.Mode = types.ModeTelnet
 		}
+
+		if form.selectedCredID > 0 {
+			form.currentHost.CredentialType = form.selectedCredType
+			form.currentHost.CredentialID = form.selectedCredID
+		} else {
+			form.currentHost.CredentialID = 0
+			form.currentHost.CredentialType = ""
+		}
+
 		repository.UpdateHost(form.currentHost)
 	}
 }
@@ -225,7 +247,7 @@ func (form *HostForm) Update(event interface{}) {
 		}
 		return
 	case tea.KeyDown:
-		if form.fieldIndex < FieldMode {
+		if form.fieldIndex < FieldIdentity {
 			form.validateCurrentField()
 			form.fieldIndex++
 			form.setFieldFocus()
@@ -378,9 +400,50 @@ func (form *HostForm) renderEditableForm() string {
 	fields = append(fields, styles.FormFieldContainer.Render(modeLine))
 
 	fields = append(fields, styles.FormSectionTitle.Render("Authentication"))
-	identityLabel := styles.FormLabel.Render("Identity")
-	identityPlaceholder := styles.FormPlaceholder.Render("(Coming soon)")
-	identityLine := lipgloss.JoinHorizontal(lipgloss.Left, identityLabel, identityPlaceholder)
+
+	var identityLabel string
+	if form.focused && form.fieldIndex == FieldIdentity {
+		identityLabel = styles.FormLabelFocused.Render("Identity")
+	} else {
+		identityLabel = styles.FormLabel.Render("Identity")
+	}
+
+	var identityText string
+	var identityStyle lipgloss.Style
+	if form.selectedCredID > 0 {
+		// Fetch the credential name based on type
+		switch form.selectedCredType {
+		case types.CredentialIdentity:
+			if identity, err := repository.GetIdentityByID(form.selectedCredID); err == nil {
+				identityText = identity.Name
+			} else {
+				identityText = "Unknown identity"
+			}
+		case types.CredentialKey:
+			if key, err := repository.GetKeyByID(form.selectedCredID); err == nil {
+				identityText = key.Name + " (Key)"
+			} else {
+				identityText = "Unknown key"
+			}
+		default:
+			identityText = "Unknown credential"
+		}
+		if form.focused && form.fieldIndex == FieldIdentity {
+			identityStyle = styles.FormInputFocused
+		} else {
+			identityStyle = styles.FormInput
+		}
+	} else {
+		identityText = "No identity selected"
+		if form.focused && form.fieldIndex == FieldIdentity {
+			identityStyle = styles.FormInputFocused
+		} else {
+			identityStyle = styles.FormPlaceholder
+		}
+	}
+
+	identityView := identityStyle.Render(identityText)
+	identityLine := lipgloss.JoinHorizontal(lipgloss.Left, identityLabel, identityView)
 	fields = append(fields, styles.FormFieldContainer.Render(identityLine))
 
 	formContent := lipgloss.JoinVertical(lipgloss.Left, fields...)
@@ -416,4 +479,17 @@ func (form *HostForm) renderModeChooser() string {
 		labelStyle.Render("Telnet"))
 
 	return lipgloss.JoinHorizontal(lipgloss.Left, sshPart, "   ", telnetPart)
+}
+
+func (form *HostForm) GetFieldIndex() int {
+	return form.fieldIndex
+}
+
+func (form *HostForm) SetSelectedCredential(credType types.CredentialType, credID uint) {
+	form.selectedCredType = credType
+	form.selectedCredID = credID
+}
+
+func (form *HostForm) GetSelectedCredential() (types.CredentialType, uint) {
+	return form.selectedCredType, form.selectedCredID
 }

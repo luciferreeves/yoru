@@ -59,4 +59,13 @@ var (
 
 	PopupButtonsContainer = lipgloss.NewStyle().
 				MarginTop(1)
+
+	PopupItemSelected = lipgloss.NewStyle().
+				Foreground(lipgloss.Color(types.Base)).
+				Background(lipgloss.Color(types.Lavender)).
+				Bold(true)
+
+	PopupItemNormal = lipgloss.NewStyle().
+			Foreground(lipgloss.Color(types.Text)).
+			Background(lipgloss.Color(types.Base))
 )

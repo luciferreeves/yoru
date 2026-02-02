@@ -20,11 +20,12 @@ type home struct {
 
 type hosts struct {
 	types.Screen
-	sidebar         *components.HostsSidebar
-	form            *forms.HostForm
-	focusedArea     focusArea
-	filterWasActive bool
-	deletePopup     *popups.DeleteHostPopup
+	sidebar              *components.HostsSidebar
+	form                 *forms.HostForm
+	focusedArea          focusArea
+	filterWasActive      bool
+	deletePopup          *popups.DeleteHostPopup
+	identityChooserPopup *popups.IdentityChooserPopup
 }
 
 type logs struct {
