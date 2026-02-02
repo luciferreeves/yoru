@@ -1,36 +1,39 @@
-# Yoru
+# 夜 (Yoru)
 
-> A modern TUI SSH/Telnet client built for speed and simplicity
+Yoru is a fast, elegant terminal-based SSH and Telnet client with credential storage and tabbed sessions.
 
-Yoru (夜 - "night") is a fast, elegant terminal-based SSH and Telnet client with secure credential storage and tabbed sessions. Built with Go and Bubble Tea.
+## What does it do?
 
-## ✨ Features
+- **Multiple Connections** - Open and manage several SSH/Telnet sessions in tabs
+- **Credential Management** - Store and use SSH keys and passwords locally
+- **Connection History** - Keep track of all your past connections with logs
+- **Known Hosts Management** - View and manage SSH fingerprints for security
+- **Offline First** - All data is stored locally, no cloud dependencies
 
-- 🔐 **Secure Credential Vault** - Store identities and SSH keys locally
-- 📑 **Tabbed Interface** - Manage multiple connections simultaneously
-- ⚡ **Blazing Fast** - Single binary, instant startup, native performance
-- 🎨 **Beautiful UI** - Clean interface with Catppuccin theming
-- 🔌 **Multi-Protocol** - SSH and Telnet support
-- 📝 **Connection Logs** - Track all your sessions with detailed history
-- 🔑 **Known Hosts** - Manage SSH fingerprints
-- 💾 **Offline First** - Everything stored locally, no cloud dependencies
+## Building and Running
 
-## 🚀 Quick Start
+To build and run Yoru locally, you need to have [Go](https://golang.org/dl/) installed on your system.
 
-### Prerequisites
-
-- Go 1.25 or higher
-
-### Building from Source
+The project uses [Makefile](https://www.gnu.org/software/make/) for build automation. Start by cloning the repository:
 
 ```bash
 git clone https://github.com/luciferreeves/yoru.git
 cd yoru
+```
+
+Then, you can build the project using:
+
+```bash
 make build
+```
+
+This will compile the source code and create an executable in the `./bin` directory. You can run Yoru with:
+
+```bash
 ./bin/yoru
 ```
 
-### Development
+To start a development version:
 
 ```bash
 make dev
