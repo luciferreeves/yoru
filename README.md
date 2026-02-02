@@ -2,6 +2,8 @@
 
 Yoru is a fast, elegant terminal-based SSH and Telnet client with credential storage and tabbed sessions.
 
+<img width="1071" height="642" alt="Screenshot 2026-02-02 at 11 01 28 AM" src="https://github.com/user-attachments/assets/c2ca7f6a-bc7e-4a8a-8e78-ca4891230021" />
+
 ## What does it do?
 
 - **Multiple Connections** - Open and manage several SSH/Telnet sessions in tabs
