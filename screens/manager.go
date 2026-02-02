@@ -62,7 +62,7 @@ func (manager *manager) SwitchScreen(screen types.Screen) tea.Cmd {
 
 func (manager *manager) OnKeyPress(key tea.KeyMsg) tea.Cmd {
 	switch key.Type {
-	case tea.KeyCtrlC:
+	case tea.KeyCtrlQ:
 		return tea.Quit
 	case tea.KeyTab:
 		manager.tabBar.NextTab()

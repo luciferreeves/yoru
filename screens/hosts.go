@@ -210,8 +210,8 @@ func (screen *hosts) OnKeyPress(key tea.KeyMsg) tea.Cmd {
 			Hostname:       "0.0.0.0",
 			Mode:           types.ModeSSH,
 			Port:           22,
-			CredentialID:   1,
-			CredentialType: types.CredentialIdentity,
+			CredentialID:   0,
+			CredentialType: "",
 		}
 		if err := repository.CreateHost(newHost); err == nil {
 			allHosts, _ := repository.GetAllHosts()
