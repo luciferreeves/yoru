@@ -1,6 +1,6 @@
 # 夜 (Yoru)
 
-Yoru is a fast, elegant terminal-based SSH and Telnet client with credential storage and tabbed sessions.
+Yoru is a fast, elegant terminal-based SSH, SFTP, and Telnet client with credential storage and tabbed sessions.
 
 <img width="1071" height="642" alt="Screenshot 2026-02-02 at 11 01 28 AM" src="https://github.com/user-attachments/assets/c2ca7f6a-bc7e-4a8a-8e78-ca4891230021" />
 
@@ -8,6 +8,7 @@ Yoru is a fast, elegant terminal-based SSH and Telnet client with credential sto
 
 - **Multiple Connections** - Open and manage several SSH/Telnet sessions in tabs
 - **Credential Management** - Store and use SSH keys and passwords locally
+- **SFTP Support** - Transfer files securely over SFTP within the terminal
 - **Connection History** - Keep track of all your past connections with logs
 - **Known Hosts Management** - View and manage SSH fingerprints for security
 - **Offline First** - All data is stored locally, no cloud dependencies
