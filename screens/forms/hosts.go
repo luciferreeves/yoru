@@ -256,6 +256,11 @@ func (form *HostForm) Update(event interface{}) {
 	case tea.KeySpace:
 		if form.fieldIndex == FieldMode {
 			form.modeIndex = (form.modeIndex + 1) % TotalModes
+			// Clear Key credential when switching to Telnet (Telnet doesn't support key auth)
+			if form.modeIndex == ModeTelnet && form.selectedCredType == types.CredentialKey {
+				form.selectedCredType = ""
+				form.selectedCredID = 0
+			}
 			return
 		}
 	case tea.KeyLeft, tea.KeyRight:
@@ -492,4 +497,11 @@ func (form *HostForm) SetSelectedCredential(credType types.CredentialType, credI
 
 func (form *HostForm) GetSelectedCredential() (types.CredentialType, uint) {
 	return form.selectedCredType, form.selectedCredID
+}
+
+func (form *HostForm) GetMode() types.ConnectionMode {
+	if form.modeIndex == ModeSSH {
+		return types.ModeSSH
+	}
+	return types.ModeTelnet
 }

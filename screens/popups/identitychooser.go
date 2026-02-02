@@ -23,6 +23,7 @@ type IdentityChooserPopup struct {
 	items         []CredentialItem
 	filteredItems []CredentialItem
 	selectedIdx   int
+	viewportStart int
 	filterActive  bool
 	filterText    string
 	onSelect      func(types.CredentialType, uint)
@@ -36,8 +37,8 @@ func NewIdentityChooserPopup() *IdentityChooserPopup {
 	return icp
 }
 
-func (icp *IdentityChooserPopup) Show(currentCredentialType types.CredentialType, currentCredentialID uint, onSelect func(types.CredentialType, uint), onCancel func()) {
-	// Load both identities and keys
+func (icp *IdentityChooserPopup) Show(currentCredentialType types.CredentialType, currentCredentialID uint, connectionMode types.ConnectionMode, onSelect func(types.CredentialType, uint), onCancel func()) {
+	// Load identities and keys based on connection mode
 	icp.items = []CredentialItem{}
 
 	identities, _ := repository.GetAllIdentities()
@@ -50,14 +51,17 @@ func (icp *IdentityChooserPopup) Show(currentCredentialType types.CredentialType
 		})
 	}
 
-	keys, _ := repository.GetAllKeys()
-	for _, key := range keys {
-		icp.items = append(icp.items, CredentialItem{
-			ID:      key.ID,
-			Name:    key.Name,
-			Details: "SSH Key",
-			Type:    types.CredentialKey,
-		})
+	// Only show SSH keys for SSH mode (Telnet doesn't support key auth)
+	if connectionMode == types.ModeSSH {
+		keys, _ := repository.GetAllKeys()
+		for _, key := range keys {
+			icp.items = append(icp.items, CredentialItem{
+				ID:      key.ID,
+				Name:    key.Name,
+				Details: "SSH Key",
+				Type:    types.CredentialKey,
+			})
+		}
 	}
 
 	icp.filteredItems = icp.items
@@ -66,6 +70,7 @@ func (icp *IdentityChooserPopup) Show(currentCredentialType types.CredentialType
 	icp.filterActive = false
 	icp.filterText = ""
 	icp.selectedIdx = 0
+	icp.viewportStart = 0
 
 	// Find the currently selected credential
 	for i, item := range icp.filteredItems {
@@ -111,6 +116,7 @@ func (icp *IdentityChooserPopup) applyFilter() {
 	if icp.selectedIdx > len(icp.filteredItems) {
 		icp.selectedIdx = 0
 	}
+	icp.viewportStart = 0
 }
 
 func (icp *IdentityChooserPopup) handleInput(msg tea.Msg) bool {
@@ -214,23 +220,59 @@ func (icp *IdentityChooserPopup) buildContent() string {
 		filterLine = styles.SidebarFilterInactive.Render("/ ")
 	}
 
+	// Viewport settings for scrolling
+	maxVisibleItems := 5
+	totalItems := len(icp.filteredItems) + 1 // +1 for "Clear Identity" option
+
 	var items []string
 
-	// Clear Identity option
-	if icp.selectedIdx == 0 {
-		items = append(items, styles.PopupItemSelected.Render("Clear Identity"))
-	} else {
-		items = append(items, styles.PopupItemNormal.Render("Clear Identity"))
+	// Adjust viewport only when cursor reaches the edge
+	if icp.selectedIdx < icp.viewportStart {
+		// Scrolling up - keep cursor at top edge
+		icp.viewportStart = icp.selectedIdx
+	} else if icp.selectedIdx >= icp.viewportStart+maxVisibleItems {
+		// Scrolling down - keep cursor at bottom edge
+		icp.viewportStart = icp.selectedIdx - maxVisibleItems + 1
 	}
 
-	// Show all items without pagination/scrolling
-	for i, item := range icp.filteredItems {
+	// Ensure viewport stays within bounds
+	if icp.viewportStart < 0 {
+		icp.viewportStart = 0
+	}
+	if totalItems > maxVisibleItems && icp.viewportStart > totalItems-maxVisibleItems {
+		icp.viewportStart = totalItems - maxVisibleItems
+	}
+
+	startIdx := icp.viewportStart
+	endIdx := min(startIdx+maxVisibleItems, totalItems)
+
+	// Clear Identity option (idx 0)
+	if startIdx == 0 {
+		if icp.selectedIdx == 0 {
+			items = append(items, styles.PopupItemSelected.Render("Clear Identity"))
+		} else {
+			items = append(items, styles.PopupItemNormal.Render("Clear Identity"))
+		}
+	}
+
+	// Show visible items
+	for i := startIdx; i < endIdx; i++ {
+		if i == 0 {
+			continue // Already handled "Clear Identity"
+		}
+
+		itemIdx := i - 1 // Adjust for "Clear Identity" offset
+		if itemIdx >= len(icp.filteredItems) {
+			break
+		}
+
+		item := icp.filteredItems[itemIdx]
 		displayText := item.Name
 		if item.Details != "" {
 			displayText += " (" + item.Details + ")"
 		}
 
-		if i+1 == icp.selectedIdx {
+		if i == icp.selectedIdx {
 			items = append(items, styles.PopupItemSelected.Render(displayText))
 		} else {
 			items = append(items, styles.PopupItemNormal.Render(displayText))

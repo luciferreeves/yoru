@@ -67,9 +67,11 @@ func (screen *hosts) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 			case formFocus:
 				if screen.form.GetFieldIndex() == forms.FieldIdentity {
 					credType, credID := screen.form.GetSelectedCredential()
+					mode := screen.form.GetMode()
 					screen.identityChooserPopup.Show(
 						credType,
 						credID,
+						mode,
 						func(credentialType types.CredentialType, credentialID uint) {
 							screen.form.SetSelectedCredential(credentialType, credentialID)
 						},
