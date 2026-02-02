@@ -227,6 +227,7 @@ func (form *KeychainForm) IsTextAreaEditing() bool {
 func (form *KeychainForm) SetFocused(focused bool) {
 	form.focused = focused
 	if focused {
+		form.fieldIndex = KeychainFieldType
 		form.setFieldFocus()
 	} else {
 		form.nameInput.Blur()

@@ -312,6 +312,7 @@ func (form *HostForm) GetLastSelectedHostID() uint {
 func (form *HostForm) SetFocused(focused bool) {
 	form.focused = focused
 	if focused {
+		form.fieldIndex = FieldName
 		form.setFieldFocus()
 	} else {
 		form.nameInput.Blur()
