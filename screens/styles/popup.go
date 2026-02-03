@@ -68,4 +68,32 @@ var (
 	PopupItemNormal = lipgloss.NewStyle().
 			Foreground(lipgloss.Color(types.Text)).
 			Background(lipgloss.Color(types.Base))
+
+	PopupButtonSpacer = lipgloss.NewStyle().
+				Width(2)
+
+	PopupContentContainer = lipgloss.NewStyle().
+				Padding(1, 2)
+
+	PopupError = lipgloss.NewStyle().
+			Foreground(lipgloss.Color(types.Red)).
+			MarginTop(1)
+
+	PopupText = lipgloss.NewStyle().
+			Foreground(lipgloss.Color(types.Text))
+
+	PopupTextBold = lipgloss.NewStyle().
+			Foreground(lipgloss.Color(types.Text)).
+			Bold(true)
+
+	PopupSection = lipgloss.NewStyle().
+			MarginTop(1)
+
+	PopupLogBox = lipgloss.NewStyle().
+			BorderStyle(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color(types.Surface2)).
+			Background(lipgloss.Color(types.Crust)).
+			Foreground(lipgloss.Color(types.Subtext0)).
+			Padding(0, 1).
+			MarginBottom(1)
 )

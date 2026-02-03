@@ -78,6 +78,21 @@ func (screen *hosts) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 						func() {},
 					)
 					return screen, nil
+				} else {
+					// Not on identity field - trigger SSH connection
+					screen.form.Save()
+					selectedHost := screen.sidebar.GetSelected()
+					if selectedHost != nil {
+						termScreen := NewTerminalScreen(selectedHost)
+						tabName := selectedHost.Name + "@" + selectedHost.Hostname
+						return screen, func() tea.Msg {
+							return types.AddTabMsg{
+								TabName: tabName,
+								Screen:  termScreen,
+							}
+						}
+					}
+					return screen, nil
 				}
 			}
 		case tea.KeyEscape:

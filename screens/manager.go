@@ -24,13 +24,45 @@ func (manager *manager) Init() tea.Cmd {
 
 func (manager *manager) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch message := msg.(type) {
+	case types.AddTabMsg:
+		// Add new tab and switch to it
+		manager.tabBar.AddTab(types.Tab{
+			Name:   message.TabName,
+			Screen: message.Screen,
+		})
+		manager.tabBar.SwitchToLastTab()
+		// Initialize the new screen
+		return manager, message.Screen.Init()
+	case types.CloseTabMsg:
+		manager.tabBar.RemoveCurrentTab()
+		return manager, nil
 	case tea.KeyMsg:
+		// Check if current screen is in terminal key capture mode
+		screen := manager.tabBar.GetCurrentScreen()
+		if termScreen, ok := screen.(*terminalScreen); ok {
+			if termScreen.GetKeyCaptureMode() == types.KeyCaptureTerminal {
+				// In terminal mode, pass ALL keys to terminal screen
+				// (terminal.go handles Ctrl+] to release capture)
+				current, command := screen.Update(msg)
+				manager.tabBar.UpdateCurrentScreen(current)
+				return manager, command
+			}
+		}
+
+		// In normal mode, handle global keys
 		if command := manager.OnKeyPress(message); command != nil {
 			return manager, command
 		}
 	case tea.WindowSizeMsg:
 		shared.GlobalState.ScreenWidth = message.Width
 		shared.GlobalState.ScreenHeight = message.Height
+		// Pass window size to current screen too
+		screen := manager.tabBar.GetCurrentScreen()
+		if screen != nil {
+			current, command := screen.Update(msg)
+			manager.tabBar.UpdateCurrentScreen(current)
+			return manager, command
+		}
 		return manager, nil
 	}
 
@@ -46,13 +78,13 @@ func (manager *manager) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (manager *manager) View() string {
 	activeScreen := manager.tabBar.GetCurrentScreen()
-	tabBarView := manager.tabBar.Render()
 
 	var contentView string
 	if activeScreen != nil {
 		contentView = activeScreen.View()
 	}
 
+	tabBarView := manager.tabBar.Render()
 	return lipgloss.JoinVertical(lipgloss.Left, contentView, tabBarView)
 }
 
@@ -62,7 +94,7 @@ func (manager *manager) SwitchScreen(screen types.Screen) tea.Cmd {
 
 func (manager *manager) OnKeyPress(key tea.KeyMsg) tea.Cmd {
 	switch key.Type {
-	case tea.KeyCtrlQ:
+	case tea.KeyCtrlC, tea.KeyCtrlQ:
 		return tea.Quit
 	case tea.KeyTab:
 		manager.tabBar.NextTab()

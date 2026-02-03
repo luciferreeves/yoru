@@ -58,7 +58,7 @@ func (icp *IdentityChooserPopup) Show(currentCredentialType types.CredentialType
 			icp.items = append(icp.items, CredentialItem{
 				ID:      key.ID,
 				Name:    key.Name,
-				Details: "SSH Key",
+				Details: key.Username,
 				Type:    types.CredentialKey,
 			})
 		}

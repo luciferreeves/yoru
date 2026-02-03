@@ -58,7 +58,7 @@ func (sidebar *KeychainSidebar) SetItems(keys []models.Key, identities []models.
 				ID:       keys[keyIdx].ID,
 				Name:     keys[keyIdx].Name,
 				ItemType: "Key",
-				Detail:   "Private Key",
+				Detail:   keys[keyIdx].Username,
 			})
 			keyIdx++
 		} else if keys[keyIdx].ID > identities[identityIdx].ID {
@@ -66,7 +66,7 @@ func (sidebar *KeychainSidebar) SetItems(keys []models.Key, identities []models.
 				ID:       keys[keyIdx].ID,
 				Name:     keys[keyIdx].Name,
 				ItemType: "Key",
-				Detail:   "Private Key",
+				Detail:   keys[keyIdx].Username,
 			})
 			keyIdx++
 		} else {

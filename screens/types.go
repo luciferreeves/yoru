@@ -5,6 +5,7 @@ import (
 	"yoru/screens/components"
 	"yoru/screens/forms"
 	"yoru/screens/popups"
+	"yoru/terminal"
 	"yoru/types"
 )
 
@@ -32,6 +33,18 @@ type logs struct {
 	types.Screen
 	logs        []models.ConnectionLog
 	selectedIdx int
+}
+
+type terminalScreen struct {
+	types.Screen
+	hostID          uint
+	host            *models.Host
+	emulator        *terminal.Emulator
+	connectionPopup *popups.ConnectionPopup
+	connecting      bool
+	connected       bool
+	connectionLog   *models.ConnectionLog
+	keyCaptureMode  types.KeyCaptureMode
 }
 
 type focusArea int

@@ -56,6 +56,22 @@ func (tabBar *tabBar) PrevTab() {
 	}
 }
 
+func (tabBar *tabBar) SwitchToLastTab() {
+	if len(tabBar.tabs) > 0 {
+		tabBar.activeIndex = len(tabBar.tabs) - 1
+	}
+}
+
+func (tabBar *tabBar) RemoveCurrentTab() {
+	if len(tabBar.tabs) <= 1 {
+		return // never remove the last tab
+	}
+	tabBar.tabs = append(tabBar.tabs[:tabBar.activeIndex], tabBar.tabs[tabBar.activeIndex+1:]...)
+	if tabBar.activeIndex >= len(tabBar.tabs) {
+		tabBar.activeIndex = len(tabBar.tabs) - 1
+	}
+}
+
 func (tabBar *tabBar) Render() string {
 	if len(tabBar.tabs) == 0 {
 		return ""
@@ -65,11 +81,15 @@ func (tabBar *tabBar) Render() string {
 	var renderedTabs []string
 
 	for index, tab := range tabBar.tabs {
+		name := tab.Name
+		if kc, ok := tab.Screen.(types.KeyCapturer); ok && kc.GetKeyCaptureMode() == types.KeyCaptureTerminal {
+			name = "*" + name
+		}
 		if index == tabBar.activeIndex {
-			content := styles.ActiveTab.Render(" " + tab.Name + " ")
+			content := styles.ActiveTab.Render(" " + name + " ")
 			renderedTabs = append(renderedTabs, content)
 		} else {
-			content := styles.InactiveTab.Render(" " + tab.Name + " ")
+			content := styles.InactiveTab.Render(" " + name + " ")
 			renderedTabs = append(renderedTabs, content)
 		}
 	}

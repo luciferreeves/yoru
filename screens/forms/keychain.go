@@ -91,6 +91,7 @@ func (form *KeychainForm) LoadKey(key *models.Key) {
 	form.fieldErrors = make(map[int]string)
 
 	form.nameInput.SetValue(key.Name)
+	form.usernameInput.SetValue(key.Username)
 	form.privateKeyArea.SetValue(key.PrivateKey)
 	form.publicKeyArea.SetValue(key.PublicKey)
 	form.certificateArea.SetValue(key.Certificate)
@@ -147,6 +148,8 @@ func (form *KeychainForm) setFieldFocus() {
 		switch form.fieldIndex {
 		case KeychainFieldName:
 			form.nameInput.Focus()
+		case KeychainFieldUsername:
+			form.usernameInput.Focus()
 		case KeychainFieldPrivateKey:
 			form.privateKeyArea.Focus()
 		case KeychainFieldPublicKey:
@@ -169,6 +172,9 @@ func (form *KeychainForm) setFieldFocus() {
 func (form *KeychainForm) validateKey() {
 	if form.nameInput.Value() == "" {
 		form.fieldErrors[KeychainFieldName] = "Name is required"
+	}
+	if form.usernameInput.Value() == "" {
+		form.fieldErrors[KeychainFieldUsername] = "Username is required"
 	}
 	if form.privateKeyArea.Value() == "" {
 		form.fieldErrors[KeychainFieldPrivateKey] = "Private key is required"
@@ -195,6 +201,7 @@ func (form *KeychainForm) Save() {
 		}
 
 		form.currentKey.Name = form.nameInput.Value()
+		form.currentKey.Username = form.usernameInput.Value()
 		form.currentKey.PrivateKey = form.privateKeyArea.Value()
 		form.currentKey.PublicKey = form.publicKeyArea.Value()
 		form.currentKey.Certificate = form.certificateArea.Value()
@@ -279,11 +286,12 @@ func (form *KeychainForm) Update(event interface{}) {
 		}
 	case tea.KeyEscape:
 		if isEditing {
-			if form.fieldIndex == KeychainFieldPrivateKey {
+			switch form.fieldIndex {
+			case KeychainFieldPrivateKey:
 				form.privateKeyArea.StopEditing()
-			} else if form.fieldIndex == KeychainFieldPublicKey {
+			case KeychainFieldPublicKey:
 				form.publicKeyArea.StopEditing()
-			} else if form.fieldIndex == KeychainFieldCertificate {
+			case KeychainFieldCertificate:
 				form.certificateArea.StopEditing()
 			}
 			return
@@ -293,8 +301,8 @@ func (form *KeychainForm) Update(event interface{}) {
 		} else if form.fieldIndex > KeychainFieldType {
 			delete(form.fieldErrors, form.fieldIndex)
 			form.fieldIndex--
-			if form.itemType == "Key" && (form.fieldIndex == KeychainFieldUsername || form.fieldIndex == KeychainFieldPassword) {
-				form.fieldIndex = KeychainFieldName
+			if form.itemType == "Key" && form.fieldIndex == KeychainFieldPassword {
+				form.fieldIndex = KeychainFieldUsername
 			}
 			if form.fieldIndex < KeychainFieldType {
 				form.fieldIndex = KeychainFieldType
@@ -307,7 +315,7 @@ func (form *KeychainForm) Update(event interface{}) {
 		} else if form.fieldIndex < maxFieldIndex {
 			delete(form.fieldErrors, form.fieldIndex)
 			form.fieldIndex++
-			if form.itemType == "Key" && (form.fieldIndex == KeychainFieldUsername || form.fieldIndex == KeychainFieldPassword) {
+			if form.itemType == "Key" && form.fieldIndex == KeychainFieldPassword {
 				form.fieldIndex = KeychainFieldPrivateKey
 			}
 			if form.fieldIndex > maxFieldIndex {
@@ -332,6 +340,8 @@ func (form *KeychainForm) Update(event interface{}) {
 		switch form.fieldIndex {
 		case KeychainFieldName:
 			form.nameInput, _ = form.nameInput.Update(keyMsg)
+		case KeychainFieldUsername:
+			form.usernameInput, _ = form.usernameInput.Update(keyMsg)
 		case KeychainFieldPrivateKey:
 			form.privateKeyArea.Update(keyMsg)
 		case KeychainFieldPublicKey:
@@ -399,6 +409,24 @@ func (form *KeychainForm) renderKeyForm() string {
 	nameLine := lipgloss.JoinHorizontal(lipgloss.Left, nameLabel, nameView)
 	fields = append(fields, styles.FormFieldContainer.Render(nameLine))
 	if errMsg, ok := form.fieldErrors[KeychainFieldName]; ok {
+		fields = append(fields, renderKeychainError(errMsg))
+	}
+
+	var usernameLabel string
+	if form.focused && form.fieldIndex == KeychainFieldUsername {
+		usernameLabel = styles.FormLabelFocused.Render("Username")
+	} else {
+		usernameLabel = styles.FormLabel.Render("Username")
+	}
+	var usernameView string
+	if form.focused && form.fieldIndex == KeychainFieldUsername {
+		usernameView = styles.FormInputFocused.Render(form.usernameInput.View())
+	} else {
+		usernameView = styles.FormInput.Render(form.usernameInput.View())
+	}
+	usernameLine := lipgloss.JoinHorizontal(lipgloss.Left, usernameLabel, usernameView)
+	fields = append(fields, styles.FormFieldContainer.Render(usernameLine))
+	if errMsg, ok := form.fieldErrors[KeychainFieldUsername]; ok {
 		fields = append(fields, renderKeychainError(errMsg))
 	}
 

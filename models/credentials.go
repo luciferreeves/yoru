@@ -12,6 +12,7 @@ type Identity struct {
 type Key struct {
 	types.Model
 	Name        string `gorm:"not null"`
+	Username    string `gorm:"not null;default:''"`
 	PrivateKey  string `gorm:"type:text;not null"`
 	PublicKey   string `gorm:"type:text"`
 	Certificate string `gorm:"type:text"`

@@ -32,11 +32,14 @@ func (screen *home) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 	currentIndex, _ := screen.navBar.GetActiveTab()
 	switch currentIndex {
 	case 0:
-		hostsScreen.Update(msg)
+		_, cmd := hostsScreen.Update(msg)
+		return screen, cmd
 	case 2:
-		keychainScreen.Update(msg)
+		_, cmd := keychainScreen.Update(msg)
+		return screen, cmd
 	case 4:
-		logsScreen.Update(msg)
+		_, cmd := logsScreen.Update(msg)
+		return screen, cmd
 	}
 
 	return screen, nil

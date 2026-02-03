@@ -2,6 +2,7 @@ package main
 
 import (
 	"yoru/screens"
+	"yoru/shared"
 	"yoru/utils/errors"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -9,6 +10,7 @@ import (
 
 func main() {
 	program := tea.NewProgram(screens.ScreenManager, tea.WithAltScreen())
+	shared.SetProgram(program)
 	if _, err := program.Run(); err != nil {
 		errors.ExitOnBridgeFailedStart(err)
 	}

@@ -10,18 +10,22 @@ import (
 )
 
 type Popup struct {
-	visible   bool
-	width     int
-	maxHeight int
-	content   string
-	onUpdate  func(tea.Msg) bool
+	visible      bool
+	width        int
+	maxHeight    int
+	content      string
+	borderless   bool
+	heightOffset int
+	onUpdate     func(tea.Msg) bool
 }
 
 func NewPopup() *Popup {
 	return &Popup{
-		visible:   false,
-		width:     60,
-		maxHeight: 20,
+		visible:      false,
+		width:        60,
+		maxHeight:    20,
+		borderless:   false,
+		heightOffset: 4,
 	}
 }
 
@@ -54,17 +58,30 @@ func (popup *Popup) SetContent(content string) {
 	popup.content = content
 }
 
+func (popup *Popup) SetWidth(width int) {
+	popup.width = width
+}
+
+func (popup *Popup) SetBorderless(borderless bool) {
+	popup.borderless = borderless
+}
+
+func (popup *Popup) SetHeightOffset(offset int) {
+	popup.heightOffset = offset
+}
+
 func (popup *Popup) Render() string {
 	if !popup.visible {
 		return ""
 	}
 
-	popupBox := styles.PopupContainer.
-		Width(popup.width).
-		MaxHeight(popup.maxHeight).
-		Render(popup.content)
+	container := styles.PopupContainer.Width(popup.width).MaxHeight(popup.maxHeight)
+	if popup.borderless {
+		container = container.BorderStyle(lipgloss.Border{}).Align(lipgloss.Center)
+	}
+	popupBox := container.Render(popup.content)
 
-	availHeight := shared.GlobalState.ScreenHeight - 4
+	availHeight := shared.GlobalState.ScreenHeight - popup.heightOffset
 	if availHeight < 1 {
 		availHeight = 1
 	}
