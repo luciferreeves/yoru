@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	program := tea.NewProgram(screens.ScreenManager, tea.WithAltScreen())
+	program := tea.NewProgram(screens.ScreenManager, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	shared.SetProgram(program)
 	if _, err := program.Run(); err != nil {
 		errors.ExitOnBridgeFailedStart(err)

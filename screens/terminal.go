@@ -125,6 +125,21 @@ func (screen *terminalScreen) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 		}
 		return screen, nil
 
+	case tea.MouseMsg:
+		if !screen.connectionPopup.IsVisible() && screen.connected {
+			switch message.Type {
+			case tea.MouseWheelUp:
+				screen.emulator.WheelUp()
+				return screen, nil
+			case tea.MouseWheelDown:
+				if screen.emulator.IsScrolled() {
+					screen.emulator.WheelDown()
+				}
+				return screen, nil
+			}
+		}
+		return screen, nil
+
 	case tea.KeyMsg:
 		if screen.connectionPopup.IsVisible() {
 			screen.connectionPopup.Update(msg)
@@ -145,7 +160,6 @@ func (screen *terminalScreen) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 			return screen, nil
 		}
 
-		// In terminal key capture mode, send all keys to SSH
 		if screen.keyCaptureMode == types.KeyCaptureTerminal && screen.connected {
 			data := keyToBytes(message)
 			if len(data) > 0 {

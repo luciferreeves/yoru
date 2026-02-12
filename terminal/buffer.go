@@ -280,11 +280,11 @@ func (b *Buffer) ScrollUp(n int) {
 		return
 	}
 
-	// Move lines to scrollback
 	for i := 0; i < n && b.ScrollTop < len(b.Lines); i++ {
 		if b.ScrollTop < len(b.Lines) {
-			line := b.Lines[b.ScrollTop]
-			b.Scrollback = append(b.Scrollback, line)
+			lineCopy := make([]Cell, b.Width)
+			copy(lineCopy, b.Lines[b.ScrollTop])
+			b.Scrollback = append(b.Scrollback, lineCopy)
 			if len(b.Scrollback) > b.MaxScrollback {
 				b.Scrollback = b.Scrollback[1:]
 			}

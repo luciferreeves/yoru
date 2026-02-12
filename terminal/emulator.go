@@ -13,7 +13,8 @@ type Emulator struct {
 	Parser *Parser
 	Title  string
 
-	// Tab stops (every 8 columns by default)
+	ScrollOffset int
+
 	TabStops map[int]bool
 }
 
@@ -51,6 +52,8 @@ func (e *Emulator) Write(data []byte) {
 	for _, action := range actions {
 		e.processAction(action)
 	}
+
+	e.ScrollOffset = 0
 }
 
 // processAction applies a single action to the buffer
@@ -206,18 +209,18 @@ func (e *Emulator) resetMode(modes []int) {
 func (e *Emulator) Render() string {
 	var result strings.Builder
 
-	for y := 0; y < e.Buffer.Height; y++ {
-		for x := 0; x < e.Buffer.Width; x++ {
-			cell := e.Buffer.Lines[y][x]
-			isCursor := e.Buffer.CursorVisible && x == e.Buffer.CursorX && y == e.Buffer.CursorY
+	lines := e.getVisibleLines()
 
-			// Determine the character to render
+	for y := 0; y < len(lines); y++ {
+		for x := 0; x < e.Buffer.Width && x < len(lines[y]); x++ {
+			cell := lines[y][x]
+			isCursor := !e.IsScrolled() && e.Buffer.CursorVisible && x == e.Buffer.CursorX && y == e.Buffer.CursorY
+
 			ch := " "
 			if cell.Rune != 0 && cell.Rune != ' ' && !cell.Hidden {
 				ch = string(cell.Rune)
 			}
 
-			// Check if this cell needs any styling at all
 			hasStyle := isCursor || cell.Foreground >= 0 || cell.Background >= 0 ||
 				cell.Bold || cell.Italic || cell.Underline || cell.Reverse ||
 				cell.Dim || cell.Strike || cell.Blink
@@ -227,31 +230,27 @@ func (e *Emulator) Render() string {
 				continue
 			}
 
-			// Build style only for cells that need it
 			style := lipgloss.NewStyle()
 
 			if isCursor {
-				// Cursor: reverse video block; swap fg/bg with defaults
 				fg := cell.Background
 				bg := cell.Foreground
 				if fg < 0 {
-					fg = 7 // default white
+					fg = 7
 				}
 				if bg < 0 {
-					bg = 0 // default black
+					bg = 0
 				}
 				style = style.
 					Foreground(lipgloss.Color(colorToString(fg))).
 					Background(lipgloss.Color(colorToString(bg)))
 			} else {
-				// Apply colors
 				if cell.Foreground >= 0 {
 					style = style.Foreground(lipgloss.Color(colorToString(cell.Foreground)))
 				}
 				if cell.Background >= 0 {
 					style = style.Background(lipgloss.Color(colorToString(cell.Background)))
 				}
-				// Apply attributes
 				if cell.Bold {
 					style = style.Bold(true)
 				}
@@ -284,12 +283,75 @@ func (e *Emulator) Render() string {
 
 			result.WriteString(style.Render(ch))
 		}
-		if y < e.Buffer.Height-1 {
+		if y < len(lines)-1 {
 			result.WriteRune('\n')
 		}
 	}
 
 	return result.String()
+}
+
+func (e *Emulator) getVisibleLines() [][]Cell {
+	if e.ScrollOffset == 0 {
+		return e.Buffer.Lines
+	}
+
+	scrollbackLen := len(e.Buffer.Scrollback)
+	if scrollbackLen == 0 {
+		return e.Buffer.Lines
+	}
+
+	if e.ScrollOffset > scrollbackLen {
+		e.ScrollOffset = scrollbackLen
+	}
+
+	lines := make([][]Cell, e.Buffer.Height)
+	blank := Cell{Rune: ' ', Foreground: -1, Background: -1}
+
+	scrollLines := e.ScrollOffset
+	if scrollLines > e.Buffer.Height {
+		scrollLines = e.Buffer.Height
+	}
+
+	for i := 0; i < scrollLines && i < e.Buffer.Height; i++ {
+		idx := scrollbackLen - e.ScrollOffset + i
+		if idx >= 0 && idx < scrollbackLen {
+			if e.Buffer.Scrollback[idx] != nil && len(e.Buffer.Scrollback[idx]) > 0 {
+				lines[i] = e.Buffer.Scrollback[idx]
+			} else {
+				lines[i] = make([]Cell, e.Buffer.Width)
+				for j := 0; j < e.Buffer.Width; j++ {
+					lines[i][j] = blank
+				}
+			}
+		} else {
+			lines[i] = make([]Cell, e.Buffer.Width)
+			for j := 0; j < e.Buffer.Width; j++ {
+				lines[i][j] = blank
+			}
+		}
+	}
+
+	for i := scrollLines; i < e.Buffer.Height; i++ {
+		bufIdx := i - scrollLines
+		if bufIdx >= 0 && bufIdx < len(e.Buffer.Lines) {
+			if e.Buffer.Lines[bufIdx] != nil && len(e.Buffer.Lines[bufIdx]) > 0 {
+				lines[i] = e.Buffer.Lines[bufIdx]
+			} else {
+				lines[i] = make([]Cell, e.Buffer.Width)
+				for j := 0; j < e.Buffer.Width; j++ {
+					lines[i][j] = blank
+				}
+			}
+		} else {
+			lines[i] = make([]Cell, e.Buffer.Width)
+			for j := 0; j < e.Buffer.Width; j++ {
+				lines[i][j] = blank
+			}
+		}
+	}
+
+	return lines
 }
 
 // colorToString converts ANSI color code to color string
@@ -343,7 +405,37 @@ func (e *Emulator) IsCursorVisible() bool {
 	return e.Buffer.CursorVisible
 }
 
-// Clear clears the terminal
 func (e *Emulator) Clear() {
 	e.Buffer.Clear()
+}
+
+func (e *Emulator) ScrollUp(lines int) {
+	maxScroll := len(e.Buffer.Scrollback)
+	e.ScrollOffset += lines
+	if e.ScrollOffset > maxScroll {
+		e.ScrollOffset = maxScroll
+	}
+}
+
+func (e *Emulator) ScrollDown(lines int) {
+	e.ScrollOffset -= lines
+	if e.ScrollOffset < 0 {
+		e.ScrollOffset = 0
+	}
+}
+
+func (e *Emulator) ScrollToBottom() {
+	e.ScrollOffset = 0
+}
+
+func (e *Emulator) WheelUp() {
+	e.ScrollUp(3)
+}
+
+func (e *Emulator) WheelDown() {
+	e.ScrollDown(3)
+}
+
+func (e *Emulator) IsScrolled() bool {
+	return e.ScrollOffset > 0
 }
