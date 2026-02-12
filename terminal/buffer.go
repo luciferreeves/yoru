@@ -67,9 +67,17 @@ func NewBuffer(width, height int) *Buffer {
 		ScrollBottom:  height - 1,
 	}
 
-	// Initialize lines
+	blank := Cell{
+		Rune:       ' ',
+		Foreground: -1,
+		Background: -1,
+	}
+
 	for i := 0; i < height; i++ {
 		b.Lines[i] = make([]Cell, width)
+		for j := 0; j < width; j++ {
+			b.Lines[i][j] = blank
+		}
 	}
 
 	// Default attributes
@@ -88,9 +96,18 @@ func (b *Buffer) Resize(width, height int) {
 		return
 	}
 
+	blank := Cell{
+		Rune:       ' ',
+		Foreground: -1,
+		Background: -1,
+	}
+
 	newLines := make([][]Cell, height)
 	for i := 0; i < height; i++ {
 		newLines[i] = make([]Cell, width)
+		for j := 0; j < width; j++ {
+			newLines[i][j] = blank
+		}
 		if i < len(b.Lines) {
 			copy(newLines[i], b.Lines[i])
 		}
