@@ -45,6 +45,7 @@ type terminalScreen struct {
 	connected       bool
 	connectionLog   *models.ConnectionLog
 	keyCaptureMode  types.KeyCaptureMode
+	shouldClose     bool
 }
 
 type focusArea int

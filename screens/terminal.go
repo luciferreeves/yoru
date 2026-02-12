@@ -33,13 +33,13 @@ func (screen *terminalScreen) Init() tea.Cmd {
 	// Show connection popup and start SSH connection
 	screen.connectionPopup.Show(
 		screen.hostID,
-		func() { // onRetry
+		func() {
 			screen.connecting = true
 			ssh.RetryConnection(screen.hostID)
 		},
-		func() { // onCancel
+		func() {
 			screen.connectionPopup.Hide()
-			// TODO: Close tab
+			screen.shouldClose = true
 		},
 	)
 
@@ -126,13 +126,16 @@ func (screen *terminalScreen) Update(msg tea.Msg) (types.Screen, tea.Cmd) {
 		return screen, nil
 
 	case tea.KeyMsg:
-		// If popup is visible, let it handle keys (Yes/No, Retry/Cancel etc)
 		if screen.connectionPopup.IsVisible() {
 			screen.connectionPopup.Update(msg)
+			if screen.shouldClose {
+				screen.shouldClose = false
+				ssh.CloseConnection(screen.hostID)
+				return screen, func() tea.Msg { return types.CloseTabMsg{} }
+			}
 			return screen, nil
 		}
 
-		// Ctrl+] toggles terminal key capture
 		if message.Type == tea.KeyCtrlCloseBracket {
 			if screen.keyCaptureMode == types.KeyCaptureTerminal {
 				screen.keyCaptureMode = types.KeyCaptureNormal

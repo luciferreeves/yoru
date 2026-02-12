@@ -2,6 +2,7 @@ package popups
 
 import (
 	"fmt"
+	"strings"
 	"yoru/repository"
 	"yoru/screens/components"
 	"yoru/screens/styles"
@@ -35,6 +36,8 @@ type ConnectionPopup struct {
 	fingerprint string
 	serverKey   sshlib.PublicKey
 
+	logBoxMinWidth int
+
 	onRetry         func()
 	onCancel        func()
 	onAcceptHostKey func()
@@ -55,6 +58,25 @@ func (cp *ConnectionPopup) Show(hostID uint, onRetry func(), onCancel func()) {
 	cp.hostID = hostID
 	cp.logs = []string{}
 	cp.state = StateConnecting
+
+	host, _ := repository.GetHostByID(hostID)
+	minWidth := 0
+	if host != nil {
+		verifyWidth := len(fmt.Sprintf("Host '%s:%d' is not in known hosts.", host.Hostname, host.Port))
+		if verifyWidth > minWidth {
+			minWidth = verifyWidth
+		}
+	}
+	fingerprintWidth := 60
+	if fingerprintWidth > minWidth {
+		minWidth = fingerprintWidth
+	}
+	sectionWidth := len("Do you want to add this host to known hosts?")
+	if sectionWidth > minWidth {
+		minWidth = sectionWidth
+	}
+	cp.logBoxMinWidth = minWidth
+
 	cp.onRetry = onRetry
 	cp.onCancel = onCancel
 	cp.popup.SetWidth(shared.GlobalState.ScreenWidth - 20)
@@ -241,9 +263,43 @@ func (cp *ConnectionPopup) buildContent() string {
 			logLines[i] = ""
 		}
 	}
-	// Fixed width: popup width (ScreenWidth-20) minus border (2) minus content padding (4)
-	logBoxWidth := shared.GlobalState.ScreenWidth - 26
-	parts = append(parts, styles.PopupLogBox.Width(logBoxWidth).Render(lipgloss.JoinVertical(lipgloss.Left, logLines...)))
+
+	maxWidth := cp.logBoxMinWidth
+
+	for _, line := range logLines {
+		if len(line) > maxWidth {
+			maxWidth = len(line)
+		}
+	}
+	if host != nil {
+		verifyWidth := len(fmt.Sprintf("Host '%s:%d' is not in known hosts.", host.Hostname, host.Port))
+		if verifyWidth > maxWidth {
+			maxWidth = verifyWidth
+		}
+	}
+	if cp.keyType != "" {
+		keyWidth := len(fmt.Sprintf("%s key fingerprint is:", cp.keyType))
+		if keyWidth > maxWidth {
+			maxWidth = keyWidth
+		}
+		if len(cp.fingerprint) > maxWidth {
+			maxWidth = len(cp.fingerprint)
+		}
+	}
+	sectionWidth := len("Do you want to add this host to known hosts?")
+	if sectionWidth > maxWidth {
+		maxWidth = sectionWidth
+	}
+
+	cp.logBoxMinWidth = maxWidth
+
+	for i, line := range logLines {
+		if len(line) < maxWidth {
+			logLines[i] = line + strings.Repeat(" ", maxWidth-len(line))
+		}
+	}
+
+	parts = append(parts, styles.PopupLogBox.Render(lipgloss.JoinVertical(lipgloss.Left, logLines...)))
 
 	// Append state-specific content below the log box
 	switch cp.state {
